@@ -10,6 +10,10 @@ import {
   postTiebreaker,
 } from "../controllers/management.controller.js";
 import { getFixtures } from "../controllers/fixture.controller.js";
+import {
+  getPlayerTournamentAnalyticsController,
+  getTournamentAnalyticsController,
+} from "../controllers/analytics.controller.js";
 
 const router = Router();
 router.get("/", getTournaments);
@@ -21,4 +25,6 @@ router.post("/:id/players", postTournamentPlayers);
 router.delete("/:id/players/:playerId", deleteTournamentPlayer);
 router.post("/:id/fixtures/generate", postGenerateFixtures);
 router.get("/:id/fixtures", getFixtures);
+router.get("/:id/analytics", getTournamentAnalyticsController);
+router.get("/:id/analytics/players/:playerId", getPlayerTournamentAnalyticsController);
 export default router;
