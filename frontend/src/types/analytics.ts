@@ -6,7 +6,7 @@ export interface PlayerAnalytics {
   matchesWon: number;
   matchesPlayed: number;
   crownEfficiency: number; // Crowns scored per match
-  clutchPerformance: number; // Win rate in decider games (Game 3/Game 5)
+  clutchPerformance: number | null; // Backend overview does not expose the per-player denominator
   deckDiversity: number; // Number of unique decks played
   totalDecksPlayed: number;
 }

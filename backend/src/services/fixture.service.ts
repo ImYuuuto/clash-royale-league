@@ -5,6 +5,7 @@ import { pool } from "../config/database.js";
 interface FixtureRow extends RowDataPacket {
   match_id: number;
   match_number: number;
+  next_game_number: number;
   status: string;
   is_tiebreaker: number;
   player1_id: number;
@@ -141,6 +142,7 @@ if (!tournament) return null;
     SELECT
       m.id AS match_id,
       m.match_number,
+      (SELECT COALESCE(MAX(mg.game_number), 0) + 1 FROM match_games mg WHERE mg.match_id = m.id) AS next_game_number,
       m.status,
       m.is_tiebreaker,
 
@@ -221,6 +223,7 @@ if (!tournament) return null;
       return {
         matchId: fixture.match_id,
         matchNumber: fixture.match_number,
+        nextGameNumber: fixture.next_game_number,
         status: fixture.status,
         isTiebreaker: Boolean(fixture.is_tiebreaker),
 

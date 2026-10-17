@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { BackendFixture, Card, GameRegistrationPayload } from '../../types/api';
@@ -6,7 +6,6 @@ import { Tournament } from '../../types/tournament';
 import { CardPicker } from '../cards/CardPicker';
 import { DeckDisplay } from '../cards/DeckDisplay';
 import { matchesApi } from '../../services/matchesApi';
-import { CLASH_ROYALE_CARDS, CARD_MAP } from '../../data/cards';
 import { useNotifications } from '../../context/NotificationContext';
 import confetti from 'canvas-confetti';
 import { AlertCircle, Check, Crown, Sparkles } from 'lucide-react';
@@ -32,7 +31,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
   const [winnerId, setWinnerId] = useState<number | null>(null);
   const [p1Crowns, setP1Crowns] = useState<number>(2);
   const [p2Crowns, setP2Crowns] = useState<number>(1);
-  const [gameNumber, setGameNumber] = useState<number>(1);
+  const [gameNumber, setGameNumber] = useState<number>(fixture.nextGameNumber || 1);
 
   // 8 Cards for each player
   const [p1CardIds, setP1CardIds] = useState<number[]>([]);
@@ -41,50 +40,41 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
   const [submitting, setSubmitting] = useState(false);
   const [validationError, setValidationError] = useState('');
 
-  // Calculate cooldowns for each player
-  const p1Cooldowns = matchesApi.calculatePlayerCooldowns(
-    fixture.player1.id,
-    tournament.cooldown_duration,
-    CLASH_ROYALE_CARDS
-  );
-
-  const p2Cooldowns = matchesApi.calculatePlayerCooldowns(
-    fixture.player2.id,
-    tournament.cooldown_duration,
-    CLASH_ROYALE_CARDS
-  );
-
-  const p1BannedIds = new Set(
-    (fixture.player1.bannedCards?.map((c) => c.id) || []).concat(
-      p1Cooldowns.bannedCards.map((c) => c.id)
-    )
-  );
-
-  const p2BannedIds = new Set(
-    (fixture.player2.bannedCards?.map((c) => c.id) || []).concat(
-      p2Cooldowns.bannedCards.map((c) => c.id)
-    )
-  );
+  const p1BannedCards = fixture.player1.bannedCards || [];
+  const p2BannedCards = fixture.player2.bannedCards || [];
+  const p1BannedIds = new Set(p1BannedCards.map((card) => card.id));
+  const p2BannedIds = new Set(p2BannedCards.map((card) => card.id));
+  const p1Cooldowns = new Map(p1BannedCards.map((card) => [card.id, card.remainingCooldownGames || 1]));
+  const p2Cooldowns = new Map(p2BannedCards.map((card) => [card.id, card.remainingCooldownGames || 1]));
+  const cards = useMemo(() => {
+    const byId = new Map<number, Card>();
+    for (const card of [
+      ...(fixture.player1.availableCards || []), ...p1BannedCards,
+      ...(fixture.player2.availableCards || []), ...p2BannedCards,
+    ]) byId.set(card.id, card);
+    return [...byId.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [fixture, p1BannedCards, p2BannedCards]);
 
   // Full card objects
   const p1Cards: Card[] = p1CardIds
-    .map((id) => CARD_MAP.get(id))
+    .map((id) => cards.find((card) => card.id === id))
     .filter((c): c is Card => Boolean(c));
 
   const p2Cards: Card[] = p2CardIds
-    .map((id) => CARD_MAP.get(id))
+    .map((id) => cards.find((card) => card.id === id))
     .filter((c): c is Card => Boolean(c));
 
-  // Check for duplicate deck
-  const isP1Duplicate =
-    tournament.ban_duplicate_decks && p1CardIds.length === 8
-      ? matchesApi.checkDuplicateDeck(fixture.player1.id, p1CardIds)
-      : false;
-
-  const isP2Duplicate =
-    tournament.ban_duplicate_decks && p2CardIds.length === 8
-      ? matchesApi.checkDuplicateDeck(fixture.player2.id, p2CardIds)
-      : false;
+  useEffect(() => {
+    if (!isOpen) return;
+    setGameNumber(fixture.nextGameNumber || 1);
+    setWinnerId(null);
+    setP1Crowns(2);
+    setP2Crowns(1);
+    setP1CardIds([]);
+    setP2CardIds([]);
+    setValidationError('');
+    setActivePlayerDeckTab('p1');
+  }, [isOpen, fixture.matchId, fixture.nextGameNumber]);
 
   const handleToggleP1Card = (card: Card) => {
     if (p1CardIds.includes(card.id)) {
@@ -116,6 +106,11 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
     e.preventDefault();
     setValidationError('');
 
+    if (cards.length === 0) {
+      setValidationError('Le catalogue de cartes est indisponible. Rechargez les fixtures après avoir rétabli le serveur.');
+      return;
+    }
+
     // Validations
     if (!winnerId) {
       setValidationError('Veuillez désigner le vainqueur du match.');
@@ -137,16 +132,6 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
       return;
     }
 
-    if (isP1Duplicate) {
-      setValidationError(`${fixture.player1.name} a déjà joué cette combinaison exacte de 8 cartes dans ce tournoi.`);
-      return;
-    }
-
-    if (isP2Duplicate) {
-      setValidationError(`${fixture.player2.name} a déjà joué cette combinaison exacte de 8 cartes dans ce tournoi.`);
-      return;
-    }
-
     const payload: GameRegistrationPayload = {
       gameNumber,
       winnerId,
@@ -162,13 +147,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
 
     setSubmitting(true);
     try {
-      const response = await matchesApi.registerGame(
-        fixture.matchId,
-        payload,
-        tournament.id,
-        fixture.player1.id,
-        fixture.player2.id
-      );
+      const response = await matchesApi.registerGame(fixture.matchId, payload);
 
       // Celebrate!
       confetti({
@@ -352,13 +331,14 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
                 cards={p1Cards}
                 onRemoveCard={(id) => setP1CardIds((prev) => prev.filter((cid) => cid !== id))}
                 title={`Deck Sélectionné : ${fixture.player1.name}`}
-                isInvalidDuplicate={isP1Duplicate}
+                isInvalidDuplicate={false}
               />
               <CardPicker
+                cards={cards}
                 selectedCardIds={p1CardIds}
                 onToggleCard={handleToggleP1Card}
                 bannedCardIds={p1BannedIds}
-                cardCooldowns={p1Cooldowns.remainingMatches}
+                cardCooldowns={p1Cooldowns}
               />
             </div>
           )}
@@ -370,13 +350,14 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
                 cards={p2Cards}
                 onRemoveCard={(id) => setP2CardIds((prev) => prev.filter((cid) => cid !== id))}
                 title={`Deck Sélectionné : ${fixture.player2.name}`}
-                isInvalidDuplicate={isP2Duplicate}
+                isInvalidDuplicate={false}
               />
               <CardPicker
+                cards={cards}
                 selectedCardIds={p2CardIds}
                 onToggleCard={handleToggleP2Card}
                 bannedCardIds={p2BannedIds}
-                cardCooldowns={p2Cooldowns.remainingMatches}
+                cardCooldowns={p2Cooldowns}
               />
             </div>
           )}

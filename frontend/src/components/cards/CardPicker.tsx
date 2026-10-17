@@ -1,10 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { Card } from '../../types/api';
-import { CLASH_ROYALE_CARDS } from '../../data/cards';
 import { CardItem } from './CardItem';
 import { Search, Filter, Droplets } from 'lucide-react';
 
 interface CardPickerProps {
+  cards: Card[];
   selectedCardIds: number[];
   onToggleCard: (card: Card) => void;
   bannedCardIds?: Set<number>;
@@ -25,6 +25,7 @@ const RARITY_LABELS = ['Toutes', 'Commune', 'Rare', 'Épique', 'Légendaire', 'C
 const ELIXIRS: (number | 'Tous')[] = ['Tous', 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export const CardPicker: React.FC<CardPickerProps> = ({
+  cards,
   selectedCardIds,
   onToggleCard,
   bannedCardIds = new Set(),
@@ -37,7 +38,7 @@ export const CardPicker: React.FC<CardPickerProps> = ({
 
   const filteredCards = useMemo(() => {
     const targetRarity = RARITY_MAP[selectedRarityLabel] || 'All';
-    return CLASH_ROYALE_CARDS.filter((card) => {
+    return cards.filter((card) => {
       // Search filter
       const matchesSearch = card.name.toLowerCase().includes(searchTerm.toLowerCase());
       // Rarity filter
@@ -47,7 +48,7 @@ export const CardPicker: React.FC<CardPickerProps> = ({
 
       return matchesSearch && matchesRarity && matchesElixir;
     });
-  }, [searchTerm, selectedRarityLabel, selectedElixir]);
+  }, [cards, searchTerm, selectedRarityLabel, selectedElixir]);
 
   return (
     <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 flex flex-col gap-3.5 shadow-sm">

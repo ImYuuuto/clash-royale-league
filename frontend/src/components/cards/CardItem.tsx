@@ -1,7 +1,14 @@
 import React from 'react';
 import { Card } from '../../types/api';
-import { RARITY_COLORS } from '../../data/cards';
 import { Lock, Droplets } from 'lucide-react';
+
+const RARITY_COLORS: Record<Card['rarity'], { bg: string; border: string; glow: string; text: string }> = {
+  Common: { bg: '#475569', border: '#94a3b8', glow: 'rgba(148,163,184,.5)', text: '#e2e8f0' },
+  Rare: { bg: '#9a3412', border: '#fb923c', glow: 'rgba(251,146,60,.5)', text: '#fed7aa' },
+  Epic: { bg: '#581c87', border: '#c084fc', glow: 'rgba(192,132,252,.5)', text: '#e9d5ff' },
+  Legendary: { bg: '#164e63', border: '#67e8f9', glow: 'rgba(103,232,249,.5)', text: '#cffafe' },
+  Champion: { bg: '#78350f', border: '#fbbf24', glow: 'rgba(251,191,36,.5)', text: '#fef3c7' },
+};
 
 interface CardItemProps {
   card: Card;

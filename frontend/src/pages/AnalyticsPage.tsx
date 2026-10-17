@@ -2,7 +2,7 @@ import React, { useMemo, useState, useEffect } from 'react';
 import { useTournament } from '../context/TournamentContext';
 import { analyticsApi } from '../services/analyticsApi';
 import { CardItem } from '../components/cards/CardItem';
-import { CARD_MAP } from '../data/cards';
+import type { Card } from '../types/api';
 import {
   BarChart3,
   TrendingUp,
@@ -12,18 +12,25 @@ import {
   Layers,
   Sparkles,
   PieChart,
+  Loader2,
 } from 'lucide-react';
 
 export const AnalyticsPage: React.FC = () => {
   const { activeTournament, fixtures } = useTournament();
   const [remoteData, setRemoteData] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+    setRemoteData(null);
+    setLoading(Boolean(activeTournament));
     if (activeTournament) {
       analyticsApi.fetchRemoteTournamentAnalytics(activeTournament.id).then((data) => {
+        if (cancelled) return;
         if (data) setRemoteData(data);
-      });
+      }).finally(() => { if (!cancelled) setLoading(false); });
     }
+    return () => { cancelled = true; };
   }, [activeTournament]);
 
   const analytics = useMemo(() => {
@@ -37,6 +44,18 @@ export const AnalyticsPage: React.FC = () => {
         Sélectionnez un tournoi pour voir les statistiques.
       </div>
     );
+  }
+
+  if (loading) {
+    return <div className="p-12 flex items-center justify-center gap-3 text-slate-500 bg-white border border-slate-200 rounded-2xl shadow-sm">
+      <Loader2 className="w-5 h-5 animate-spin" /> Chargement des statistiques du serveur…
+    </div>;
+  }
+
+  if (!remoteData) {
+    return <div className="p-12 text-center text-slate-500 bg-white border border-slate-200 rounded-2xl shadow-sm">
+      Les statistiques du serveur ne sont pas disponibles. Vérifiez la connexion au backend et réessayez.
+    </div>;
   }
 
   const topCards = analytics.cardAnalytics.slice(0, 8);
@@ -192,7 +211,7 @@ export const AnalyticsPage: React.FC = () => {
 
                   <td className="py-3.5 px-4 text-center">
                     <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600 border border-blue-200">
-                      {p.clutchPerformance}%
+                      {p.clutchPerformance === null ? '—' : `${p.clutchPerformance}%`}
                     </span>
                   </td>
 
@@ -220,8 +239,7 @@ export const AnalyticsPage: React.FC = () => {
 
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
             {topCards.map((cardStat) => {
-              const card = CARD_MAP.get(cardStat.cardId);
-              if (!card) return null;
+              const card: Card = { id: cardStat.cardId, name: cardStat.cardName, rarity: cardStat.rarity as Card['rarity'], elixir_cost: cardStat.elixirCost, icon_url: null };
               return (
                 <div key={cardStat.cardId} className="flex flex-col items-center gap-1">
                   <CardItem card={card} size="sm" />
@@ -246,8 +264,7 @@ export const AnalyticsPage: React.FC = () => {
 
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
             {highestWinRateCards.map((cardStat) => {
-              const card = CARD_MAP.get(cardStat.cardId);
-              if (!card) return null;
+              const card: Card = { id: cardStat.cardId, name: cardStat.cardName, rarity: cardStat.rarity as Card['rarity'], elixir_cost: cardStat.elixirCost, icon_url: null };
               return (
                 <div key={cardStat.cardId} className="flex flex-col items-center gap-1">
                   <CardItem card={card} size="sm" />

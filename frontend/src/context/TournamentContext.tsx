@@ -41,11 +41,17 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
       const res = await axiosInstance.get('/api/health');
       setServerStatus(res.status === 200 ? 'online' : 'offline');
+    } catch {
+      setServerStatus('offline');
+      setDatabaseStatus('offline');
+      return;
+    }
 
+    try {
       const dbRes = await axiosInstance.get('/api/health/db');
       setDatabaseStatus(dbRes.status === 200 ? 'online' : 'offline');
     } catch {
-      setServerStatus('offline');
+      // The API can remain available while its database connection is down.
       setDatabaseStatus('offline');
     }
   }, []);
@@ -70,8 +76,16 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     }
     setLoadingFixtures(true);
     try {
-      const data = await tournamentsApi.getFixtures(activeTournament.id);
+      const [data, updatedTournament] = await Promise.all([
+        tournamentsApi.getFixtures(activeTournament.id),
+        tournamentsApi.getById(activeTournament.id),
+      ]);
       setFixtures(data);
+      if (updatedTournament) {
+        setTournaments((current) => current.map((tournament) =>
+          tournament.id === updatedTournament.id ? updatedTournament : tournament,
+        ));
+      }
     } catch (err) {
       console.error('Error refreshing fixtures:', err);
     } finally {

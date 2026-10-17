@@ -3,8 +3,6 @@ import { BackendFixture } from '../../types/api';
 import { Tournament } from '../../types/tournament';
 import { Button } from '../ui/Button';
 import { CardItem } from '../cards/CardItem';
-import { matchesApi } from '../../services/matchesApi';
-import { CLASH_ROYALE_CARDS } from '../../data/cards';
 import { Swords, Shield, Flame, Lock } from 'lucide-react';
 
 interface PreMatchBriefingProps {
@@ -22,29 +20,9 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'p1_cards' | 'p2_cards'>('overview');
 
-  // Cooldown calculation
   const cooldownEnabled = tournament.cooldown_duration > 0;
-
-  // Use backend cards if present, otherwise calculate via matchesApi
-  const p1Cooldowns = matchesApi.calculatePlayerCooldowns(
-    fixture.player1.id,
-    tournament.cooldown_duration,
-    CLASH_ROYALE_CARDS
-  );
-
-  const p2Cooldowns = matchesApi.calculatePlayerCooldowns(
-    fixture.player2.id,
-    tournament.cooldown_duration,
-    CLASH_ROYALE_CARDS
-  );
-
-  const p1BannedCards = fixture.player1.bannedCards?.length
-    ? fixture.player1.bannedCards
-    : p1Cooldowns.bannedCards;
-
-  const p2BannedCards = fixture.player2.bannedCards?.length
-    ? fixture.player2.bannedCards
-    : p2Cooldowns.bannedCards;
+  const p1BannedCards = fixture.player1.bannedCards || [];
+  const p2BannedCards = fixture.player2.bannedCards || [];
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-8 animate-fadeIn max-w-5xl mx-auto">
@@ -245,7 +223,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
                         card={c}
                         size="sm"
                         isBanned={true}
-                        cooldownRemaining={p1Cooldowns.remainingMatches.get(c.id) || 1}
+                        cooldownRemaining={c.remainingCooldownGames || 1}
                       />
                     ))}
                   </div>
@@ -272,7 +250,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
                         card={c}
                         size="sm"
                         isBanned={true}
-                        cooldownRemaining={p2Cooldowns.remainingMatches.get(c.id) || 1}
+                        cooldownRemaining={c.remainingCooldownGames || 1}
                       />
                     ))}
                   </div>
@@ -302,7 +280,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
                     card={c}
                     size="md"
                     isBanned={true}
-                    cooldownRemaining={p1Cooldowns.remainingMatches.get(c.id) || 1}
+                    cooldownRemaining={c.remainingCooldownGames || 1}
                   />
                 ))}
               </div>
@@ -326,7 +304,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
                     card={c}
                     size="md"
                     isBanned={true}
-                    cooldownRemaining={p2Cooldowns.remainingMatches.get(c.id) || 1}
+                    cooldownRemaining={c.remainingCooldownGames || 1}
                   />
                 ))}
               </div>
@@ -335,7 +313,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
         </div>
       ) : (
         <div className="p-8 text-center rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 text-xs font-semibold">
-          L'épuisement des cartes est désactivé pour ce tournoi. Toutes les 109 cartes Clash Royale sont accessibles aux deux joueurs.
+          L'épuisement des cartes est désactivé pour ce tournoi. Toutes les cartes disponibles dans le catalogue sont accessibles aux deux joueurs.
         </div>
       )}
     </div>

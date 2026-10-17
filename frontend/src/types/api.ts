@@ -4,6 +4,7 @@ export interface Card {
   rarity: 'Common' | 'Rare' | 'Epic' | 'Legendary' | 'Champion';
   elixir_cost: number;
   icon_url: string | null;
+  remainingCooldownGames?: number;
 }
 
 export interface PlayerStats {
@@ -18,6 +19,8 @@ export interface PlayerStats {
 export interface BackendFixture {
   matchId: number;
   matchNumber: number;
+  nextGameNumber?: number;
+  source?: 'backend' | 'local';
   status: 'scheduled' | 'in_progress' | 'completed';
   isTiebreaker: boolean;
   player1: PlayerStats;

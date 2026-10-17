@@ -1,28 +1,23 @@
 
 import app from "./app.js";
-import {
-  pool,
-  testDatabaseConnection,
-} from "./config/database.js";
+import { testDatabaseConnection } from "./config/database.js";
 
 const PORT = Number(process.env.PORT) || 3000;
 
 async function startServer(): Promise<void> {
+  console.log("Starting server...");
+
+  app.listen(PORT, () => {
+    console.log(`Tournament API running at http://localhost:${PORT}`);
+  });
+
   try {
-    console.log("Starting server...");
-
     await testDatabaseConnection();
-
-    app.listen(PORT, () => {
-      console.log(
-        `Tournament API running at http://localhost:${PORT}`,
-      );
-    });
   } catch (error) {
-    console.error("Failed to start the application:", error);
-
-    await pool.end();
-    process.exitCode = 1;
+    console.error(
+      "API is running, but MySQL is unavailable. Check the database settings and start MySQL:",
+      error instanceof Error ? error.message : error,
+    );
   }
 }
 

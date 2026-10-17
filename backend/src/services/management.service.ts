@@ -102,6 +102,26 @@ export async function updatePlayer(idInput: unknown, input: unknown) {
   return rows[0];
 }
 
+export async function deletePlayer(idInput: unknown) {
+  const id = positiveId(idInput, "player ID");
+  const [players] = await pool.execute<RowDataPacket[]>("SELECT id FROM players WHERE id = ?", [id]);
+  if (!players[0]) throw new ManagementError("Player not found", 404);
+  const [references] = await pool.execute<RowDataPacket[]>(
+    `SELECT
+       (SELECT COUNT(*) FROM tournament_players WHERE player_id = ?) +
+       (SELECT COUNT(*) FROM matches WHERE player1_id = ? OR player2_id = ? OR winner_id = ?) +
+       (SELECT COUNT(*) FROM match_games WHERE winner_id = ?) +
+       (SELECT COUNT(*) FROM player_decks WHERE player_id = ?) +
+       (SELECT COUNT(*) FROM card_cooldowns WHERE player_id = ?) AS total`,
+    [id, id, id, id, id, id, id],
+  );
+  if (Number(references[0]?.total ?? 0) > 0) {
+    throw new ManagementError("This player is referenced by tournament history and cannot be deleted", 409);
+  }
+  await pool.execute("DELETE FROM players WHERE id = ?", [id]);
+  return { id, deleted: true };
+}
+
 export async function listTournaments() {
   const [rows] = await pool.execute<RowDataPacket[]>(
     `SELECT t.id, t.name, t.status, t.winner_player_id AS winnerPlayerId,

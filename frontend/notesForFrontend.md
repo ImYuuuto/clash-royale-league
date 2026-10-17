@@ -1,6 +1,6 @@
 The backend endpoints are ready for frontend integration. Please connect the UI to:
 
-- `GET /api/players`, `POST /api/players`, `GET /api/players/:id`, `PATCH /api/players/:id`
+- `GET /api/players`, `POST /api/players`, `GET /api/players/:id`, `PATCH /api/players/:id`, `DELETE /api/players/:id` (409 when tournament history references the player)
 - `GET /api/tournaments`, `POST /api/tournaments`, `GET /api/tournaments/:id`, `PATCH /api/tournaments/:id`
 - `POST /api/tournaments/:id/players` with `{ "playerIds": [1, 2] }`
 - `DELETE /api/tournaments/:id/players/:playerId` while the tournament is in draft

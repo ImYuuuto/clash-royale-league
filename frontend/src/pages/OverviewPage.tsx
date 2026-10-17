@@ -31,10 +31,10 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
   const completedMatches = fixtures.filter((f) => f.status === 'completed');
   const upcomingMatches = fixtures.filter((f) => f.status !== 'completed');
 
-  const totalMatches = fixtures.length || 15;
+  const totalMatches = fixtures.length;
   const progressPercent = Math.min(
     100,
-    Math.round((completedMatches.length / totalMatches) * 100)
+    totalMatches ? Math.round((completedMatches.length / totalMatches) * 100) : 0
   );
 
   return (
