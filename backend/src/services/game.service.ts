@@ -98,7 +98,7 @@ async function getBannedCardIds(
   // Get this player's most recent individual games in this tournament.
   const [recentGames] = await connection.execute<IdRow[]>(
     `
-    SELECT DISTINCT mg.id
+    SELECT mg.id
     FROM player_decks pd
     JOIN match_games mg ON mg.id = pd.match_game_id
     JOIN matches m ON m.id = mg.match_id

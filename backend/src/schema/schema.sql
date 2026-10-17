@@ -1,8 +1,4 @@
--- Active: 1790167023671@@127.0.0.1@3306@clash_royale_league
 -- Global Players
-drop database clash_royale_league;
-create database clash_royale_league;
-use clash_royale_league;
 CREATE TABLE players (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,

@@ -5,7 +5,7 @@ The game-flow integration verifier writes temporary players, a tournament, a fix
 ## Prepare an isolated test database
 
 1. Create a dedicated MySQL database whose name ends with `_test` (for example, `cr_league_test`).
-2. Apply `src/schema/schema.sql` to that database, then apply the incremental migrations needed by the current app, including `migration_1.sql`, `migration_2.sql`, and `migration_3.sql`. Do not run the schema file against a database with data: it drops and recreates its database.
+2. For a fresh test database, apply `src/schema/schema.sql`, then `migration_1.sql` and `migration_2.sql`. The fresh schema already includes the `migration_3.sql` unique key. For an existing database, apply the incremental migrations in order instead. Do not run the schema file against a database with data: it recreates tables.
 3. Seed at least 48 cards using `src/seeds/seed_cards.sql`.
 4. Create a `.env.test` file with credentials for only that test database. Keep it uncommitted.
 5. Start the backend with `CR_LEAGUE_SETTINGS_PATH=.env.test` and `PORT=3001` (or another unused port).

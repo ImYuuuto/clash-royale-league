@@ -98,7 +98,8 @@ try {
     "rejects a winner outside the fixture");
 
   const first = await postGame(submission(1, playerIds[0], decks[0], decks[1]));
-  check(first.status === 201 && first.body?.data?.fixtureCompleted === false, "registers the first valid game");
+  check(first.status === 201 && first.body?.data?.fixtureCompleted === false,
+    `registers the first valid game (${first.status}: ${first.body?.message || JSON.stringify(first.body)})`);
 
   check((await postGame(submission(2, playerIds[0], decks[0], decks[2]))).status === 409,
     "rejects a card deck still on cooldown");
@@ -106,8 +107,9 @@ try {
   check((await postGame(submission(3, playerIds[0], decks[2], decks[3]))).status === 409,
     "rejects a non-sequential game number");
 
-  const second = await postGame(submission(2, playerIds[0], decks[2], decks[3]));
-  check(second.status === 201 && second.body?.data?.fixtureCompleted === false, "registers the second valid game");
+  const second = await postGame(submission(2, playerIds[1], decks[2], decks[3]));
+  check(second.status === 201 && second.body?.data?.fixtureCompleted === false,
+    `registers the second valid game (${second.status}: ${second.body?.message || JSON.stringify(second.body)})`);
 
   check((await postGame(submission(3, playerIds[0], decks[0], decks[4]))).status === 409,
     "rejects a repeated deck after its cards leave cooldown");
