@@ -1,10 +1,27 @@
-import { request, ApiResponse } from './apiClient';
-import { BackendFixture } from '../types/api';
-import { Tournament, CreateTournamentInput, StandingsEntry } from '../types/tournament';
+import { axiosInstance } from './apiClient';
+import type { BackendFixture } from '../types/api';
+import type { Tournament, CreateTournamentInput, StandingsEntry } from '../types/tournament';
 import { INITIAL_TOURNAMENTS } from '../data/mockData';
 import { playersApi } from './playersApi';
 
 const STORAGE_KEY = 'crl_tournaments';
+
+function normalizeTournament(raw: any): Tournament {
+  return {
+    id: raw.id,
+    name: raw.name,
+    status: raw.status || 'draft',
+    format: raw.format || 'single_round_robin',
+    winner_player_id: raw.winnerPlayerId ?? raw.winner_player_id ?? null,
+    winner_name: raw.winnerName ?? raw.winner_name,
+    cooldown_duration: raw.cooldownDuration ?? raw.cooldown_duration ?? 2,
+    ban_duplicate_decks: raw.banDuplicateDecks ?? raw.ban_duplicate_decks ?? true,
+    match_format_bo: raw.matchFormatBo ?? raw.match_format_bo ?? 3,
+    tiebreaker_mode: raw.tiebreakerMode ?? raw.tiebreaker_mode ?? 'bo5',
+    created_at: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
+    players: Array.isArray(raw.players) ? raw.players : [],
+  };
+}
 
 function getStoredTournaments(): Tournament[] {
   try {
@@ -28,53 +45,89 @@ function saveTournaments(tournaments: Tournament[]) {
 }
 
 export const tournamentsApi = {
-  // Fetch real fixtures from the backend API: GET /api/tournaments/:id/fixtures
-  async getFixtures(tournamentId: number): Promise<BackendFixture[]> {
-    try {
-      const response = await request<ApiResponse<BackendFixture[]>>(
-        `/api/tournaments/${tournamentId}/fixtures`
-      );
-      if (response.success && Array.isArray(response.data)) {
-        return response.data;
-      }
-      return [];
-    } catch (error) {
-      console.warn(`[tournamentsApi] Failed to fetch remote fixtures for tournament ${tournamentId}:`, error);
-      // Fallback to simulated fixtures generated for the tournament
-      return this.getLocalFixtures(tournamentId);
-    }
-  },
-
+  // GET /api/tournaments
   async getAll(): Promise<Tournament[]> {
+    try {
+      const response = await axiosInstance.get('/api/tournaments');
+      const list = response.data?.data || response.data;
+      if (Array.isArray(list)) {
+        const normalized = list.map(normalizeTournament);
+        saveTournaments(normalized);
+        return normalized;
+      }
+    } catch (error) {
+      console.warn('[tournamentsApi] GET /api/tournaments failed, using local storage:', error);
+    }
     return getStoredTournaments();
   },
 
+  // GET /api/tournaments/:id
   async getById(id: number): Promise<Tournament | undefined> {
+    try {
+      const response = await axiosInstance.get(`/api/tournaments/${id}`);
+      const raw = response.data?.data || response.data;
+      if (raw && raw.id) {
+        return normalizeTournament(raw);
+      }
+    } catch (error) {
+      console.warn(`[tournamentsApi] GET /api/tournaments/${id} failed, using local cache:`, error);
+    }
     const all = await this.getAll();
     return all.find((t) => t.id === id);
   },
 
+  // Full tournament creation flow as per notesForFrontend.md:
+  // 1. POST /api/tournaments
+  // 2. POST /api/tournaments/:id/players
+  // 3. POST /api/tournaments/:id/fixtures/generate
+  // 4. PATCH /api/tournaments/:id -> { status: 'active' }
   async create(input: CreateTournamentInput): Promise<Tournament> {
-    // Attempt backend endpoint if available
-    try {
-      const response = await request<ApiResponse<Tournament>>('/api/tournaments', {
-        method: 'POST',
-        body: JSON.stringify(input),
-      });
-      if (response.success && response.data) {
-        const stored = getStoredTournaments();
-        stored.unshift(response.data);
-        saveTournaments(stored);
-        return response.data;
-      }
-    } catch {
-      // Backend does not implement POST /api/tournaments yet.
-      // Gracefully store locally to keep application functional.
-    }
-
     const allPlayers = await playersApi.getAll();
     const tournamentPlayers = allPlayers.filter((p) => input.playerIds.includes(p.id));
 
+    try {
+      // Step 1: Create tournament
+      const createRes = await axiosInstance.post('/api/tournaments', {
+        name: input.name.trim(),
+        cooldownDuration: input.cooldown_duration,
+        banDuplicateDecks: input.ban_duplicate_decks,
+        matchFormatBo: input.match_format_bo,
+      });
+      const createdTournament = createRes.data?.data || createRes.data;
+      const tournamentId = createdTournament.id;
+
+      // Step 2: Enroll players
+      if (input.playerIds.length >= 2) {
+        await axiosInstance.post(`/api/tournaments/${tournamentId}/players`, {
+          playerIds: input.playerIds,
+        });
+
+        // Step 3: Generate fixtures
+        await axiosInstance.post(`/api/tournaments/${tournamentId}/fixtures/generate`);
+
+        // Step 4: Set status to active
+        await axiosInstance.patch(`/api/tournaments/${tournamentId}`, {
+          status: 'active',
+        });
+      }
+
+      // Fetch fresh tournament details
+      const fresh = await this.getById(tournamentId);
+      if (fresh) {
+        fresh.players = tournamentPlayers;
+        const stored = getStoredTournaments();
+        stored.unshift(fresh);
+        saveTournaments(stored);
+        return fresh;
+      }
+    } catch (error) {
+      console.warn('[tournamentsApi] Remote tournament creation flow encountered error, falling back locally:', error);
+      if ((error as any)?.statusCode >= 400 && (error as any)?.statusCode < 500) {
+        throw error;
+      }
+    }
+
+    // Local fallback
     const newTournament: Tournament = {
       id: Date.now(),
       name: input.name,
@@ -93,19 +146,98 @@ export const tournamentsApi = {
     stored.unshift(newTournament);
     saveTournaments(stored);
 
-    // Seed local fixtures for this tournament
     this.generateRoundRobinFixtures(newTournament);
-
     return newTournament;
+  },
+
+  // POST /api/tournaments/:id/players
+  async addPlayers(tournamentId: number, playerIds: number[]): Promise<void> {
+    try {
+      await axiosInstance.post(`/api/tournaments/${tournamentId}/players`, { playerIds });
+    } catch (error) {
+      console.warn(`[tournamentsApi] Failed to add players to tournament ${tournamentId}:`, error);
+      throw error;
+    }
+  },
+
+  // DELETE /api/tournaments/:id/players/:playerId
+  async removePlayer(tournamentId: number, playerId: number): Promise<void> {
+    try {
+      await axiosInstance.delete(`/api/tournaments/${tournamentId}/players/${playerId}`);
+    } catch (error) {
+      console.warn(`[tournamentsApi] Failed to remove player ${playerId}:`, error);
+      throw error;
+    }
+  },
+
+  // POST /api/tournaments/:id/fixtures/generate
+  async generateFixtures(tournamentId: number): Promise<void> {
+    try {
+      await axiosInstance.post(`/api/tournaments/${tournamentId}/fixtures/generate`);
+    } catch (error) {
+      console.warn(`[tournamentsApi] Failed to generate fixtures for ${tournamentId}:`, error);
+      throw error;
+    }
+  },
+
+  // GET /api/tournaments/:id/fixtures
+  async getFixtures(tournamentId: number): Promise<BackendFixture[]> {
+    try {
+      const response = await axiosInstance.get(`/api/tournaments/${tournamentId}/fixtures`);
+      const fixtures = response.data?.data || response.data;
+      if (Array.isArray(fixtures)) {
+        return fixtures;
+      }
+    } catch (error) {
+      console.warn(`[tournamentsApi] GET /api/tournaments/${tournamentId}/fixtures failed, using local fixtures:`, error);
+    }
+    return this.getLocalFixtures(tournamentId);
+  },
+
+  // POST /api/tournaments/:id/tiebreaker with { playerIds: [p1, p2] }
+  async createTiebreaker(tournamentId: number, playerIds: number[]): Promise<void> {
+    try {
+      await axiosInstance.post(`/api/tournaments/${tournamentId}/tiebreaker`, { playerIds });
+    } catch (error) {
+      console.warn(`[tournamentsApi] Failed to create tiebreaker:`, error);
+      throw error;
+    }
+  },
+
+  // PATCH /api/tournaments/:id with { status: 'completed' | 'active' }
+  async updateStatus(tournamentId: number, status: 'active' | 'completed' | 'tiebreaker'): Promise<void> {
+    try {
+      await axiosInstance.patch(`/api/tournaments/${tournamentId}`, { status });
+    } catch (error) {
+      console.warn(`[tournamentsApi] Failed to update tournament ${tournamentId} status:`, error);
+      throw error;
+    }
+  },
+
+  // Local helpers
+  getLocalFixtures(tournamentId: number): BackendFixture[] {
+    try {
+      const raw = localStorage.getItem(`crl_fixtures_${tournamentId}`);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  },
+
+  saveLocalFixtures(tournamentId: number, fixtures: BackendFixture[]): void {
+    try {
+      localStorage.setItem(`crl_fixtures_${tournamentId}`, JSON.stringify(fixtures));
+    } catch (err) {
+      console.error('Failed to save fixtures locally:', err);
+    }
   },
 
   generateRoundRobinFixtures(tournament: Tournament): BackendFixture[] {
     const players = tournament.players;
     const fixtures: BackendFixture[] = [];
     let matchNumber = 1;
-
     const n = players.length;
-    // Generate pairings
+
     for (let i = 0; i < n; i++) {
       for (let j = i + 1; j < n; j++) {
         fixtures.push({
@@ -134,78 +266,15 @@ export const tournamentsApi = {
       }
     }
 
-    if (tournament.format === 'double_round_robin') {
-      for (let i = 0; i < n; i++) {
-        for (let j = i + 1; j < n; j++) {
-          fixtures.push({
-            matchId: tournament.id * 100 + matchNumber,
-            matchNumber,
-            status: 'scheduled',
-            isTiebreaker: false,
-            player1: {
-              id: players[j].id,
-              name: players[j].name,
-              tag: players[j].player_tag,
-              points: 0,
-              bannedCards: [],
-              availableCards: [],
-            },
-            player2: {
-              id: players[i].id,
-              name: players[i].name,
-              tag: players[i].player_tag,
-              points: 0,
-              bannedCards: [],
-              availableCards: [],
-            },
-          });
-          matchNumber++;
-        }
-      }
-    }
-
-    try {
-      localStorage.setItem(`crl_fixtures_${tournament.id}`, JSON.stringify(fixtures));
-    } catch (err) {
-      console.error(err);
-    }
-
+    this.saveLocalFixtures(tournament.id, fixtures);
     return fixtures;
   },
 
-  getLocalFixtures(tournamentId: number): BackendFixture[] {
-    try {
-      const raw = localStorage.getItem(`crl_fixtures_${tournamentId}`);
-      if (raw) return JSON.parse(raw);
-    } catch {
-      // ignore
-    }
-
-    // Default sample fixtures for tournament 1
-    const stored = getStoredTournaments();
-    const tourney = stored.find((t) => t.id === tournamentId);
-    if (tourney && tourney.players.length >= 2) {
-      return this.generateRoundRobinFixtures(tourney);
-    }
-
-    return [];
-  },
-
-  saveLocalFixtures(tournamentId: number, fixtures: BackendFixture[]) {
-    try {
-      localStorage.setItem(`crl_fixtures_${tournamentId}`, JSON.stringify(fixtures));
-    } catch (err) {
-      console.error(err);
-    }
-  },
-
-  // Calculate standings from tournament and fixture results
-  calculateStandings(tournament: Tournament, fixtures: BackendFixture[]): StandingsEntry[] {
-    const playerStatsMap = new Map<number, StandingsEntry>();
-
+  computeStandings(tournament: Tournament, fixtures: BackendFixture[]): StandingsEntry[] {
+    const playerMap = new Map<number, StandingsEntry>();
     for (const p of tournament.players) {
-      playerStatsMap.set(p.id, {
-        rank: 0,
+      playerMap.set(p.id, {
+        rank: 1,
         player_id: p.id,
         player_name: p.name,
         player_tag: p.player_tag,
@@ -222,67 +291,42 @@ export const tournamentsApi = {
     }
 
     for (const f of fixtures) {
-      if (f.status === 'completed') {
-        const p1 = playerStatsMap.get(f.player1.id);
-        const p2 = playerStatsMap.get(f.player2.id);
-
-        if (p1 && p2) {
-          p1.matches_played += 1;
-          p2.matches_played += 1;
-
-          // Points are retrieved from fixture player points if present
+      if (f.status === 'completed' && !f.isTiebreaker) {
+        const s1 = playerMap.get(f.player1.id);
+        const s2 = playerMap.get(f.player2.id);
+        if (s1 && s2) {
+          s1.matches_played++;
+          s2.matches_played++;
           if (f.player1.points > f.player2.points) {
-            p1.matches_won += 1;
-            p1.points += 3;
-            p2.matches_lost += 1;
-            p1.form?.push('W');
-            p2.form?.push('L');
-          } else if (f.player2.points > f.player1.points) {
-            p2.matches_won += 1;
-            p2.points += 3;
-            p1.matches_lost += 1;
-            p2.form?.push('W');
-            p1.form?.push('L');
+            s1.matches_won++;
+            s1.points += 3;
+            s1.form?.push('W');
+            s2.matches_lost++;
+            s2.form?.push('L');
+          } else {
+            s2.matches_won++;
+            s2.points += 3;
+            s2.form?.push('W');
+            s1.matches_lost++;
+            s1.form?.push('L');
           }
+          s1.crown_diff = s1.crowns_for - s1.crowns_against;
+          s2.crown_diff = s2.crowns_for - s2.crowns_against;
         }
       }
     }
 
-    // If no fixtures completed yet, populate from player league history
-    const entries = Array.from(playerStatsMap.values());
-    if (entries.every((e) => e.matches_played === 0)) {
-      for (const entry of entries) {
-        const found = tournament.players.find((p) => p.id === entry.player_id);
-        if (found && (found.matches_played ?? 0) > 0) {
-          entry.matches_played = found.matches_played ?? 0;
-          entry.matches_won = found.matches_won ?? 0;
-          entry.matches_lost = Math.max(0, (found.matches_played ?? 0) - (found.matches_won ?? 0));
-          entry.points = found.points ?? (entry.matches_won * 3);
-          entry.crowns_for = found.crowns_for ?? 0;
-          entry.crowns_against = found.crowns_against ?? 0;
-          entry.crown_diff = entry.crowns_for - entry.crowns_against;
-        }
-      }
-    }
-
-    // Sort by points DESC, then crown_diff DESC, then crowns_for DESC
-    entries.sort((a, b) => {
+    const standings = Array.from(playerMap.values()).sort((a, b) => {
       if (b.points !== a.points) return b.points - a.points;
-      if (b.crown_diff !== a.crown_diff) return b.crown_diff - a.crown_diff;
-      return b.crowns_for - a.crowns_for;
+      if (b.matches_won !== a.matches_won) return b.matches_won - a.matches_won;
+      return b.crown_diff - a.crown_diff;
     });
 
-    // Check for tiebreakers at top of table
-    const topPoints = entries[0]?.points ?? 0;
-    const tiedForFirst = entries.filter((e) => e.points === topPoints && e.points > 0);
-    const hasTiebreaker = tiedForFirst.length > 1;
-
-    entries.forEach((entry, idx) => {
+    standings.forEach((entry, idx) => {
       entry.rank = idx + 1;
       entry.isLeader = idx === 0 && entry.points > 0;
-      entry.inTiebreaker = hasTiebreaker && entry.points === topPoints;
     });
 
-    return entries;
+    return standings;
   },
 };

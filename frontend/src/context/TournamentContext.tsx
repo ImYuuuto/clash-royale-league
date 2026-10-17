@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
-import { Tournament, CreateTournamentInput, StandingsEntry } from '../types/tournament';
-import { BackendFixture } from '../types/api';
+import type { Tournament, CreateTournamentInput, StandingsEntry } from '../types/tournament';
+import type { BackendFixture } from '../types/api';
 import { tournamentsApi } from '../services/tournamentsApi';
-import { API_BASE_URL } from '../services/apiClient';
+import { axiosInstance } from '../services/apiClient';
 
 interface TournamentContextType {
   tournaments: Tournament[];
@@ -39,11 +39,11 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         }
       }
 
-      const res = await fetch(`${API_BASE_URL}/api/health`);
-      setServerStatus(res.ok ? 'online' : 'offline');
+      const res = await axiosInstance.get('/api/health');
+      setServerStatus(res.status === 200 ? 'online' : 'offline');
 
-      const dbRes = await fetch(`${API_BASE_URL}/api/health/db`);
-      setDatabaseStatus(dbRes.ok ? 'online' : 'offline');
+      const dbRes = await axiosInstance.get('/api/health/db');
+      setDatabaseStatus(dbRes.status === 200 ? 'online' : 'offline');
     } catch {
       setServerStatus('offline');
       setDatabaseStatus('offline');
@@ -102,7 +102,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   const standings = useMemo(() => {
     if (!activeTournament) return [];
-    return tournamentsApi.calculateStandings(activeTournament, fixtures);
+    return tournamentsApi.computeStandings(activeTournament, fixtures);
   }, [activeTournament, fixtures]);
 
   const createTournament = async (input: CreateTournamentInput): Promise<Tournament> => {

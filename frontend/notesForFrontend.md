@@ -13,4 +13,4 @@ The backend endpoints are ready for frontend integration. Please connect the UI 
 
 Tournament setup flow: create tournament, enroll at least two players, generate fixtures, then set status to `active`. When all regular fixtures are complete, either set status to `completed` if there’s one points leader, or create the Bo5 tiebreaker if exactly two players are tied for first. Completing that tiebreaker records the champion.
 
-Responses use `{ "success": true, "data": ... }`; errors use `{ "success": false, "message": "..." }`. Please handle loading, empty, validation, and conflict responses in the UI. Analytics and fixture availability depend on seeded cards and applied migrations.
+Responses use `{ "success": true, "data": ... }`; errors use `{ "success": false, "message": "..." }`. Please handle loading, empty, validation, and conflict responses in the UI. Analytics and fixture availability depend on seeded cards and applied migrations. 

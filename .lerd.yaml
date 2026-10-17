@@ -1,0 +1,9 @@
+domains:
+  - clash-royale-league
+node_version: "22"
+secured: true
+services:
+  - mysql
+proxy:
+  command: npm run dev:web
+  port: 5173

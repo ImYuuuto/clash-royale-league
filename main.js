@@ -19,6 +19,36 @@ function readSettings() {
   try {
     return JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
   } catch {
+    try {
+      const envPath = path.join(app.getAppPath(), "backend", ".env");
+      if (fs.existsSync(envPath)) {
+        const envContent = fs.readFileSync(envPath, "utf8");
+        const parsed = {};
+        for (const line of envContent.split(/\r?\n/)) {
+          const m = line.match(/^\s*([\w.-]+)\s*=\s*(.*)?\s*$/);
+          if (m) {
+            let val = m[2] ? m[2].trim() : "";
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+              val = val.slice(1, -1);
+            }
+            parsed[m[1]] = val;
+          }
+        }
+        if (parsed.DB_HOST && parsed.DB_USER && parsed.DB_NAME) {
+          const fallback = {
+            DB_HOST: parsed.DB_HOST,
+            DB_PORT: parsed.DB_PORT || "3306",
+            DB_USER: parsed.DB_USER,
+            DB_PASSWORD: parsed.DB_PASSWORD ?? "",
+            DB_NAME: parsed.DB_NAME,
+          };
+          try {
+            writeSettings(fallback);
+          } catch {}
+          return fallback;
+        }
+      }
+    } catch {}
     return null;
   }
 }
@@ -47,8 +77,18 @@ async function connectDatabase(settings) {
   await connection.end();
 }
 
-function startBackend(settings) {
+async function isApiRunning() {
+  try {
+    const res = await fetch(`${API_URL}/api/health`);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+async function startBackend(settings) {
   if (backendProcess && backendProcess.exitCode === null) return;
+  if (await isApiRunning()) return;
   const backendDir = path.join(app.getAppPath(), "backend");
   const entryPoint = path.join(backendDir, "dist", "server.js");
   const childEnv = {
@@ -94,7 +134,8 @@ function createWindow() {
     height: 850,
     minWidth: 960,
     minHeight: 680,
-    backgroundColor: "#10131a",
+    backgroundColor: "#f0f2f7",
+    icon: path.join(__dirname, "frontend", "public", "icon.webp"),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

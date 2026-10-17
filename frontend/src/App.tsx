@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { AudioProvider } from './context/AudioContext';
 import { TournamentProvider } from './context/TournamentContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { AppShell } from './components/layout/AppShell';
@@ -51,7 +52,7 @@ function MainApp() {
     },
     settings: {
       title: 'System Settings',
-      description: 'MySQL database connections, API configurations, and architectural boundaries.',
+      description: 'League engine configuration, API diagnostics, and cache management.',
     },
   };
 
@@ -92,10 +93,12 @@ function MainApp() {
 
 export default function App() {
   return (
-    <NotificationProvider>
-      <TournamentProvider>
-        <MainApp />
-      </TournamentProvider>
-    </NotificationProvider>
+    <AudioProvider>
+      <NotificationProvider>
+        <TournamentProvider>
+          <MainApp />
+        </TournamentProvider>
+      </NotificationProvider>
+    </AudioProvider>
   );
 }

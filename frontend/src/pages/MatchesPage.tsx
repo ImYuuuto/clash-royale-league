@@ -4,7 +4,7 @@ import { BackendFixture } from '../types/api';
 import { PreMatchBriefing } from '../components/matches/PreMatchBriefing';
 import { PostMatchModal } from '../components/games/PostMatchModal';
 import { Button } from '../components/ui/Button';
-import { Swords, Shield, Clock, CheckCircle2, ChevronRight, Filter } from 'lucide-react';
+import { Swords, CheckCircle2, ChevronRight, Filter } from 'lucide-react';
 
 export const MatchesPage: React.FC = () => {
   const { activeTournament, fixtures, refreshFixtures } = useTournament();
@@ -46,35 +46,35 @@ export const MatchesPage: React.FC = () => {
   return (
     <div className="space-y-6 animate-fadeIn">
       {/* Top Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#141b2b] to-[#101420] border border-slate-800 p-6 rounded-3xl shadow-xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#0b2559] to-[#1746a0] p-6 rounded-2xl shadow-lg">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-amber-300">
             <Swords className="w-6 h-6" />
           </div>
           <div>
             <h2 className="text-xl font-bold font-display uppercase tracking-wide text-white">
-              Match Lobby & Fixtures
+              Lobby & Fixtures
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Inspect upcoming pairings, review pre-match card availability, and record game results.
+            <p className="text-xs text-blue-100/70 mt-0.5">
+              Inspectez les affrontements, consultez les disponibilités et enregistrez les résultats.
             </p>
           </div>
         </div>
 
         {/* Status Filters */}
-        <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 p-1.5 rounded-2xl">
-          <Filter className="w-3.5 h-3.5 text-slate-500 ml-2 mr-1" />
+        <div className="flex items-center gap-1.5 bg-white/10 border border-white/20 p-1.5 rounded-xl backdrop-blur-sm">
+          <Filter className="w-3.5 h-3.5 text-white/50 ml-2 mr-1" />
           {(['all', 'scheduled', 'completed'] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
-              className={`text-xs font-semibold px-3 py-1 rounded-xl capitalize transition-all cursor-pointer ${
+              className={`text-xs font-semibold px-3 py-1 rounded-lg capitalize transition-all cursor-pointer ${
                 statusFilter === s
-                  ? 'bg-amber-500 text-slate-950 font-bold shadow-md'
-                  : 'text-slate-400 hover:text-slate-200'
+                  ? 'bg-white text-[#0b2559] font-bold shadow-sm'
+                  : 'text-white/70 hover:text-white'
               }`}
             >
-              {s}
+              {s === 'all' ? 'Tous' : s === 'scheduled' ? 'Programmés' : 'Terminés'}
             </button>
           ))}
         </div>
@@ -89,13 +89,13 @@ export const MatchesPage: React.FC = () => {
             <div
               key={fixture.matchId}
               onClick={() => setSelectedFixture(fixture)}
-              className="bg-[#101420] hover:bg-[#131929] border border-slate-800/80 hover:border-slate-700/80 p-5 rounded-2xl transition-all duration-150 cursor-pointer shadow-lg flex flex-col md:flex-row md:items-center justify-between gap-4 group"
+              className="bg-white hover:shadow-md border border-slate-200 hover:border-slate-300 p-5 rounded-2xl transition-all duration-150 cursor-pointer shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4 group"
             >
-              {/* Match Number & Format */}
+              {/* Match Number */}
               <div className="flex items-center gap-4 min-w-[140px]">
-                <div className="w-12 h-12 rounded-xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center">
-                  <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">MATCH</span>
-                  <span className="font-display font-black text-lg text-amber-400 leading-none">
+                <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-200 flex flex-col items-center justify-center">
+                  <span className="text-[9px] uppercase font-bold text-slate-400 tracking-wider">MATCH</span>
+                  <span className="font-display font-black text-lg text-[#0b2559] leading-none">
                     {String(fixture.matchNumber).padStart(2, '0')}
                   </span>
                 </div>
@@ -103,49 +103,36 @@ export const MatchesPage: React.FC = () => {
                   <span
                     className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                       isCompleted
-                        ? 'bg-slate-800 text-slate-400 border-slate-700'
-                        : 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40'
+                        ? 'bg-slate-50 text-slate-500 border-slate-200'
+                        : 'bg-emerald-50 text-emerald-600 border-emerald-200'
                     }`}
                   >
-                    {fixture.status}
+                    {fixture.status === 'completed' ? 'Terminé' : 'Programmé'}
                   </span>
                   <div className="text-[11px] text-slate-400 font-medium mt-1">
-                    {fixture.isTiebreaker ? 'Tiebreaker BO5' : `Series BO${activeTournament?.match_format_bo || 3}`}
+                    {fixture.isTiebreaker ? 'Tiebreaker BO5' : `Série BO${activeTournament?.match_format_bo || 3}`}
                   </div>
                 </div>
               </div>
 
-              {/* Competitors Versus */}
+              {/* VS Section */}
               <div className="flex-1 flex items-center justify-center gap-4 sm:gap-8">
-                {/* Player 1 */}
                 <div className="flex items-center gap-3 justify-end flex-1">
                   <div className="text-right">
-                    <div className="font-bold text-sm text-white group-hover:text-amber-300 transition-colors leading-tight">
+                    <div className="font-bold text-sm text-slate-800 group-hover:text-[#0b2559] transition-colors leading-tight">
                       {fixture.player1.name}
                     </div>
                     <div className="text-[10px] font-mono text-slate-400">{fixture.player1.tag}</div>
                   </div>
-                  <img
-                    src="https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=120&auto=format&fit=crop&q=80"
-                    alt=""
-                    className="w-10 h-10 rounded-full object-cover border border-slate-700"
-                  />
                 </div>
 
-                {/* VS Badge */}
-                <div className="w-8 h-8 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center font-display font-black text-xs text-amber-400 shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[#0b2559] flex items-center justify-center font-display font-black text-xs text-amber-400 shrink-0 shadow-sm">
                   VS
                 </div>
 
-                {/* Player 2 */}
                 <div className="flex items-center gap-3 justify-start flex-1">
-                  <img
-                    src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80"
-                    alt=""
-                    className="w-10 h-10 rounded-full object-cover border border-slate-700"
-                  />
                   <div className="text-left">
-                    <div className="font-bold text-sm text-white group-hover:text-amber-300 transition-colors leading-tight">
+                    <div className="font-bold text-sm text-slate-800 group-hover:text-[#0b2559] transition-colors leading-tight">
                       {fixture.player2.name}
                     </div>
                     <div className="text-[10px] font-mono text-slate-400">{fixture.player2.tag}</div>
@@ -153,7 +140,7 @@ export const MatchesPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* Actions / Status */}
+              {/* Actions */}
               <div className="flex items-center gap-3 justify-end min-w-[180px]">
                 <Button
                   variant={isCompleted ? 'secondary' : 'primary'}
@@ -168,17 +155,17 @@ export const MatchesPage: React.FC = () => {
                   }}
                   icon={isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Swords className="w-3.5 h-3.5" />}
                 >
-                  {isCompleted ? 'Inspect Match' : 'Register Result'}
+                  {isCompleted ? 'Inspecter' : 'Enregistrer'}
                 </Button>
-                <ChevronRight className="w-5 h-5 text-slate-500 group-hover:text-white transition-colors" />
+                <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors" />
               </div>
             </div>
           );
         })}
 
         {filteredFixtures.length === 0 && (
-          <div className="p-12 text-center rounded-3xl bg-[#101420] border border-slate-800 text-slate-400 text-xs">
-            No matches found for the selected status filter.
+          <div className="p-12 text-center rounded-2xl bg-white border border-slate-200 text-slate-400 text-xs shadow-sm">
+            Aucun match trouvé pour le filtre sélectionné.
           </div>
         )}
       </div>

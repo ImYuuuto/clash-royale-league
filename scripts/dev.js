@@ -59,6 +59,26 @@ async function start() {
     CR_LEAGUE_USER_DATA_DIR: process.env.CR_LEAGUE_USER_DATA_DIR || path.join(os.tmpdir(), "cr-league-manager-dev"),
   };
 
+  const backendPortAvailable = await canListen(3000);
+  if (backendPortAvailable) {
+    const backend = spawn("npm", ["run", "dev"], {
+      cwd: path.join(root, "backend"),
+      stdio: "inherit",
+      shell: true,
+    });
+    children.push(backend);
+    backend.once("error", (error) => {
+      console.error("Could not start backend server:", error.message);
+      stopAll();
+    });
+    backend.once("exit", (code) => {
+      if (!shuttingDown && code) {
+        console.error(`Backend server exited with code ${code}.`);
+        stopAll();
+      }
+    });
+  }
+
   const frontend = spawn(process.execPath, [frontendCli, "dev", "--host", "127.0.0.1", "--port", String(port), "--strictPort"], {
     cwd: frontendDir,
     stdio: "inherit",

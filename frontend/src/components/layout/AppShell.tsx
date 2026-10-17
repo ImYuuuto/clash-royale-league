@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Sidebar, NavItem } from './Sidebar';
 import { Topbar } from './Topbar';
-import { DatabaseModal } from './DatabaseModal';
 
 interface AppShellProps {
   currentTab: NavItem;
@@ -18,10 +17,8 @@ export const AppShell: React.FC<AppShellProps> = ({
   pageDescription,
   children,
 }) => {
-  const [dbModalOpen, setDbModalOpen] = useState(false);
-
   return (
-    <div className="flex min-h-screen bg-[#0a0d14] text-slate-100 antialiased selection:bg-amber-500/30 selection:text-amber-200">
+    <div className="flex min-h-screen bg-[#f4f6fa] text-slate-800 antialiased selection:bg-blue-500/20 selection:text-blue-900">
       {/* Sidebar */}
       <Sidebar currentTab={currentTab} onSelectTab={onSelectTab} />
 
@@ -30,16 +27,12 @@ export const AppShell: React.FC<AppShellProps> = ({
         <Topbar
           pageTitle={pageTitle}
           pageDescription={pageDescription}
-          onOpenDatabaseSetup={() => setDbModalOpen(true)}
         />
 
         <main className="flex-1 p-8 overflow-y-auto max-w-7xl w-full mx-auto">
           {children}
         </main>
       </div>
-
-      {/* Database Setup Modal */}
-      <DatabaseModal isOpen={dbModalOpen} onClose={() => setDbModalOpen(false)} />
     </div>
   );
 };

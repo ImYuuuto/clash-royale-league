@@ -29,7 +29,7 @@ export const PlayersPage: React.FC = () => {
       const data = await playersApi.getAll();
       setPlayers(data);
     } catch {
-      showNotification('error', 'Error', 'Failed to load players roster.');
+      showNotification('error', 'Erreur', 'Impossible de charger le roster.');
     } finally {
       setLoading(false);
     }
@@ -51,11 +51,11 @@ export const PlayersPage: React.FC = () => {
     if (editingPlayer) {
       const updated = await playersApi.update(editingPlayer.id, input);
       setPlayers((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      showNotification('success', 'Profile Updated', `${updated.name}'s profile was updated.`);
+      showNotification('success', 'Profil Mis à Jour', `Le profil de ${updated.name} a été mis à jour.`);
     } else {
       const created = await playersApi.create(input);
       setPlayers((prev) => [...prev, created]);
-      showNotification('success', 'Player Registered', `${created.name} was added to the Global Roster.`);
+      showNotification('success', 'Joueur Enregistré', `${created.name} a été ajouté au Roster.`);
     }
   };
 
@@ -65,10 +65,10 @@ export const PlayersPage: React.FC = () => {
     try {
       await playersApi.delete(deletePlayerTarget.id);
       setPlayers((prev) => prev.filter((p) => p.id !== deletePlayerTarget.id));
-      showNotification('success', 'Player Removed', `${deletePlayerTarget.name} was removed from the roster.`);
+      showNotification('success', 'Joueur Supprimé', `${deletePlayerTarget.name} a été retiré du roster.`);
       setDeletePlayerTarget(null);
     } catch {
-      showNotification('error', 'Error', 'Could not delete player.');
+      showNotification('error', 'Erreur', 'Impossible de supprimer le joueur.');
     } finally {
       setDeleting(false);
     }
@@ -76,35 +76,35 @@ export const PlayersPage: React.FC = () => {
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Top Banner and Quick Actions */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#141b2b] to-[#101420] border border-slate-800 p-6 rounded-3xl shadow-xl">
+      {/* Top Banner */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-[#0b2559] to-[#1746a0] p-6 rounded-2xl shadow-lg">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+          <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/20 flex items-center justify-center text-amber-300">
             <Users className="w-6 h-6" />
           </div>
           <div>
             <h2 className="text-xl font-bold font-display uppercase tracking-wide text-white">
-              Global Players Roster
+              Roster des Joueurs
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
-              Manage professional competitors, Clash Royale tags, and performance histories.
+            <p className="text-xs text-blue-100/70 mt-0.5">
+              Gestion des compétiteurs, tags Clash Royale et historiques.
             </p>
           </div>
         </div>
 
         <Button
-          variant="primary"
+          variant="gold"
           onClick={() => {
             setEditingPlayer(null);
             setModalOpen(true);
           }}
           icon={<UserPlus className="w-4 h-4" />}
         >
-          Add Player
+          Ajouter Joueur
         </Button>
       </div>
 
-      {/* Search and Filters */}
+      {/* Search */}
       <div className="flex items-center justify-between gap-4">
         <div className="relative max-w-md w-full">
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
@@ -112,21 +112,21 @@ export const PlayersPage: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search roster by player name or tag (e.g. #829PL90Q)..."
-            className="w-full bg-[#0d111a] border border-slate-800 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500 shadow-sm"
+            placeholder="Rechercher par nom ou tag (#829PL90Q)..."
+            className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0b2559] focus:ring-2 focus:ring-[#0b2559]/10 shadow-sm transition-all"
           />
         </div>
 
-        <div className="text-xs text-slate-400 font-medium">
-          Showing <span className="font-bold text-white">{filteredPlayers.length}</span> of {players.length} Competitors
+        <div className="text-xs text-slate-500 font-medium">
+          <span className="font-bold text-slate-800">{filteredPlayers.length}</span> sur {players.length} joueurs
         </div>
       </div>
 
-      {/* Grid of Players */}
+      {/* Grid */}
       {loading ? (
         <div className="min-h-[300px] flex flex-col items-center justify-center text-slate-400 gap-3">
-          <Loader2 className="w-8 h-8 animate-spin text-amber-400" />
-          <span className="text-xs font-semibold tracking-wider uppercase">Loading Roster Database...</span>
+          <Loader2 className="w-8 h-8 animate-spin text-[#0b2559]" />
+          <span className="text-xs font-semibold tracking-wider uppercase">Chargement du Roster...</span>
         </div>
       ) : filteredPlayers.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -143,15 +143,15 @@ export const PlayersPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        <div className="bg-[#121724] border border-slate-800 rounded-3xl p-12 text-center text-slate-400 flex flex-col items-center justify-center max-w-md mx-auto">
-          <div className="w-16 h-16 rounded-2xl bg-slate-800/60 flex items-center justify-center text-slate-500 mb-4">
+        <div className="bg-white border border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center max-w-md mx-auto shadow-sm">
+          <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 mb-4">
             <Users className="w-8 h-8" />
           </div>
-          <h3 className="font-display font-bold text-lg text-white">No Players Found</h3>
+          <h3 className="font-display font-bold text-lg text-slate-800">Aucun Joueur Trouvé</h3>
           <p className="text-xs text-slate-400 mt-1 mb-6 leading-relaxed">
             {searchTerm
-              ? `No players matched the search term "${searchTerm}". Try a different name or tag.`
-              : 'The global roster is currently empty. Register players to start building leagues.'}
+              ? `Aucun joueur ne correspond à "${searchTerm}". Essayez un autre nom ou tag.`
+              : 'Le roster est vide. Enregistrez des joueurs pour commencer.'}
           </p>
           <Button
             variant="primary"
@@ -162,7 +162,7 @@ export const PlayersPage: React.FC = () => {
             }}
             icon={<UserPlus className="w-4 h-4" />}
           >
-            Register First Player
+            Premier Joueur
           </Button>
         </div>
       )}
@@ -180,9 +180,9 @@ export const PlayersPage: React.FC = () => {
         isOpen={Boolean(deletePlayerTarget)}
         onClose={() => setDeletePlayerTarget(null)}
         onConfirm={handleDeletePlayer}
-        title="Remove Player from Roster"
-        message={`Are you sure you want to remove ${deletePlayerTarget?.name} (${deletePlayerTarget?.player_tag})? This action cannot be undone.`}
-        confirmLabel="Remove Player"
+        title="Retirer le Joueur du Roster"
+        message={`Êtes-vous sûr de vouloir retirer ${deletePlayerTarget?.name} (${deletePlayerTarget?.player_tag}) ? Cette action est irréversible.`}
+        confirmLabel="Retirer"
         variant="danger"
         loading={deleting}
       />

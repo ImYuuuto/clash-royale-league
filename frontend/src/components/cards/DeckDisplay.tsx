@@ -14,7 +14,7 @@ interface DeckDisplayProps {
 export const DeckDisplay: React.FC<DeckDisplayProps> = ({
   cards,
   onRemoveCard,
-  title = 'Registered 8-Card Deck',
+  title = 'Deck Enregistré (8 Cartes)',
   subtitle,
   isInvalidDuplicate = false,
 }) => {
@@ -27,38 +27,38 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
   const emptySlotsCount = Math.max(0, 8 - cards.length);
 
   return (
-    <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-4 shadow-xl">
+    <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 shadow-sm">
       {/* Deck Header */}
-      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-800/80">
+      <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200">
         <div>
-          <div className="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
+          <div className="text-sm font-bold text-slate-900 uppercase tracking-wide flex items-center gap-2">
             <span>{title}</span>
             <span
               className={`text-xs px-2 py-0.5 rounded-full font-bold ${
                 isComplete
-                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                  : 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
+                  ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                  : 'bg-amber-100 text-amber-800 border border-amber-300'
               }`}
             >
-              {cards.length} / 8 Cards
+              {cards.length} / 8 Cartes
             </span>
           </div>
-          {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+          {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
         </div>
 
         {/* Average Elixir Badge */}
-        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-950/60 border border-purple-500/30 text-purple-300">
-          <Droplets className="w-3.5 h-3.5 fill-purple-400 text-purple-400" />
-          <span className="text-xs font-semibold">Avg:</span>
-          <span className="text-sm font-bold text-white">{avgElixir}</span>
+        <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-100 border border-purple-200 text-purple-800">
+          <Droplets className="w-3.5 h-3.5 fill-purple-600 text-purple-600" />
+          <span className="text-xs font-semibold">Moyenne :</span>
+          <span className="text-sm font-bold text-purple-900">{avgElixir}</span>
         </div>
       </div>
 
       {/* Duplicate warning */}
       {isInvalidDuplicate && (
-        <div className="mb-3 p-2.5 rounded-xl bg-rose-500/15 border border-rose-500/40 text-rose-300 text-xs flex items-center gap-2">
+        <div className="mb-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 font-semibold">
           <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>This exact 8-card combination has already been used by this player in this tournament.</span>
+          <span>Cette combinaison exacte de 8 cartes a déjà été utilisée par ce joueur dans ce tournoi.</span>
         </div>
       )}
 
@@ -78,10 +78,10 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
         {Array.from({ length: emptySlotsCount }).map((_, idx) => (
           <div
             key={`empty-${idx}`}
-            className="w-16 h-22 rounded-xl border-2 border-dashed border-slate-700/50 bg-slate-900/30 flex flex-col items-center justify-center text-slate-600 select-none"
+            className="w-16 h-22 rounded-xl border-2 border-dashed border-slate-300 bg-white/70 flex flex-col items-center justify-center text-slate-400 select-none"
           >
             <span className="text-[10px] font-bold uppercase tracking-wider">Slot {cards.length + idx + 1}</span>
-            <span className="text-xs mt-0.5 text-slate-600">+</span>
+            <span className="text-xs mt-0.5 text-slate-400 font-bold">+</span>
           </div>
         ))}
       </div>
@@ -89,12 +89,12 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
       {/* Helper text */}
       <div className="mt-3 text-right">
         {isComplete ? (
-          <span className="text-xs text-emerald-400 font-medium inline-flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Deck complete and valid
+          <span className="text-xs text-emerald-600 font-bold inline-flex items-center gap-1">
+            <CheckCircle2 className="w-3.5 h-3.5" /> Deck complet et prêt
           </span>
         ) : (
-          <span className="text-xs text-amber-400 font-medium">
-            Select {emptySlotsCount} more card{emptySlotsCount > 1 ? 's' : ''} to complete deck
+          <span className="text-xs text-amber-600 font-bold">
+            Sélectionnez encore {emptySlotsCount} carte{emptySlotsCount > 1 ? 's' : ''} pour compléter le deck
           </span>
         )}
       </div>

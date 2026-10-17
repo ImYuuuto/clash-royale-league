@@ -46,34 +46,34 @@ export const Modal: React.FC<ModalProps> = ({
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-slate-950/80 backdrop-blur-md"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
           />
 
           {/* Modal Card */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 15 }}
-            transition={{ duration: 0.2 }}
-            className={`relative w-full ${maxWidthStyles[maxWidth]} bg-[#121724] border border-slate-700/60 rounded-2xl shadow-2xl shadow-black/60 overflow-hidden z-10 my-8`}
+            exit={{ opacity: 0, scale: 0.96, y: 12 }}
+            transition={{ duration: 0.18 }}
+            className={`relative w-full ${maxWidthStyles[maxWidth]} bg-white border border-slate-200/90 rounded-2xl shadow-2xl overflow-hidden z-10 my-8`}
           >
-            {/* Header */}
-            <div className="flex items-start justify-between p-6 border-b border-slate-800 bg-gradient-to-r from-slate-900/50 to-slate-800/30">
+            {/* Header with Royal Navy Banner */}
+            <div className="flex items-start justify-between p-5 bg-gradient-to-r from-[#0b2559] to-[#1746a0] text-white">
               <div>
-                <h3 className="text-xl font-bold font-display tracking-wide text-white uppercase">{title}</h3>
-                {description && <p className="text-xs text-slate-400 mt-1">{description}</p>}
+                <h3 className="text-lg font-black font-display tracking-wide uppercase">{title}</h3>
+                {description && <p className="text-xs text-blue-100/80 mt-0.5">{description}</p>}
               </div>
               <button
                 onClick={onClose}
-                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-800 transition-colors"
-                aria-label="Close dialog"
+                className="text-blue-200 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
+                aria-label="Fermer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Content */}
-            <div className="p-6 max-h-[calc(85vh-140px)] overflow-y-auto">{children}</div>
+            {/* Content Body */}
+            <div className="p-6 max-h-[calc(85vh-130px)] overflow-y-auto bg-white text-slate-800">{children}</div>
           </motion.div>
         </div>
       )}

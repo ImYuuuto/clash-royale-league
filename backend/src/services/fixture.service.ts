@@ -55,7 +55,7 @@ async function getPlayerCardAvailability(
   // in this tournament that have a registered deck.
   const [recentGames] = await pool.execute<GameRow[]>(
     `
-    SELECT DISTINCT mg.id
+    SELECT mg.id
     FROM player_decks pd
     JOIN match_games mg ON mg.id = pd.match_game_id
     JOIN matches m ON m.id = mg.match_id
@@ -91,30 +91,17 @@ async function getPlayerCardAvailability(
     `
     SELECT
       cc.card_id,
-      COUNT(DISTINCT recent.game_id) AS remaining_games
+      COUNT(DISTINCT cc.match_game_id) AS remaining_games
     FROM card_cooldowns cc
-    JOIN (
-      SELECT mg.id AS game_id, mg.game_number, m.match_number
-      FROM player_decks pd
-      JOIN match_games mg ON mg.id = pd.match_game_id
-      JOIN matches m ON m.id = mg.match_id
-      WHERE pd.tournament_id = ?
-        AND pd.player_id = ?
-        AND m.tournament_id = ?
-      ORDER BY m.match_number DESC, mg.game_number DESC, mg.id DESC
-      LIMIT ?
-    ) recent ON recent.game_id = cc.match_game_id
     WHERE cc.tournament_id = ?
       AND cc.player_id = ?
+      AND cc.match_game_id IN (${placeholders})
     GROUP BY cc.card_id
     `,
     [
       tournamentId,
       playerId,
-      tournamentId,
-      cooldownDuration,
-      tournamentId,
-      playerId,
+      ...recentGameIds,
     ],
   );
 

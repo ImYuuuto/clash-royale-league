@@ -53,12 +53,12 @@ export const PlayerModal: React.FC<PlayerModalProps> = ({
     const trimmedTag = tag.trim().toUpperCase();
 
     if (!trimmedName) {
-      setError('Player name is required.');
+      setError('Le nom du joueur est requis.');
       return;
     }
 
     if (!trimmedTag || !trimmedTag.match(/^#?[0-9A-Z]{3,12}$/)) {
-      setError('Please provide a valid Clash Royale player tag (e.g. #829PL90Q).');
+      setError('Veuillez fournir un tag Clash Royale valide (ex: #829PL90Q).');
       return;
     }
 
@@ -73,7 +73,7 @@ export const PlayerModal: React.FC<PlayerModalProps> = ({
       });
       onClose();
     } catch (err) {
-      setError((err as Error).message || 'Failed to save player.');
+      setError((err as Error).message || "Impossible d'enregistrer le joueur.");
     } finally {
       setLoading(false);
     }
@@ -83,51 +83,51 @@ export const PlayerModal: React.FC<PlayerModalProps> = ({
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={initialPlayer ? 'Edit Player Profile' : 'Register New Player'}
-      description="Add a competitor to the Global League Roster."
+      title={initialPlayer ? 'Modifier le Profil Joueur' : 'Inscrire un Joueur'}
+      description="Ajouter ou modifier un compétiteur au roster officiel."
       maxWidth="md"
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
-          <div className="p-3 bg-rose-500/15 border border-rose-500/30 rounded-xl text-xs text-rose-300">
+          <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-semibold">
             {error}
           </div>
         )}
 
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
-            <User className="w-3.5 h-3.5 text-amber-400" />
-            <span>PLAYER NAME</span>
+          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5 uppercase">
+            <User className="w-3.5 h-3.5 text-amber-500" />
+            <span>Nom du Joueur</span>
           </label>
           <input
             type="text"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. Mohamed Light"
-            className="w-full bg-[#0a0d14] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+            placeholder="ex: Mohamed Light"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all font-semibold"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1 flex items-center gap-1.5">
-            <Tag className="w-3.5 h-3.5 text-amber-400" />
-            <span>CLASH ROYALE TAG</span>
+          <label className="block text-xs font-bold text-slate-700 mb-1 flex items-center gap-1.5 uppercase">
+            <Tag className="w-3.5 h-3.5 text-amber-500" />
+            <span>Tag Clash Royale</span>
           </label>
           <input
             type="text"
             required
             value={tag}
             onChange={(e) => setTag(e.target.value)}
-            placeholder="e.g. #829PL90Q"
-            className="w-full bg-[#0a0d14] border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white focus:outline-none focus:border-amber-500 uppercase"
+            placeholder="ex: #829PL90Q"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-slate-800 focus:bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 transition-all uppercase font-bold"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-2 flex items-center gap-1.5">
-            <Image className="w-3.5 h-3.5 text-amber-400" />
-            <span>SELECT AVATAR</span>
+          <label className="block text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5 uppercase">
+            <Image className="w-3.5 h-3.5 text-amber-500" />
+            <span>Choisir un Avatar</span>
           </label>
           <div className="flex items-center gap-2.5 overflow-x-auto pb-2">
             {PRESET_AVATARS.map((url, idx) => (
@@ -137,8 +137,8 @@ export const PlayerModal: React.FC<PlayerModalProps> = ({
                 onClick={() => setAvatarUrl(url)}
                 className={`relative w-12 h-12 rounded-full overflow-hidden border-2 transition-transform cursor-pointer shrink-0 ${
                   avatarUrl === url
-                    ? 'border-amber-400 scale-110 shadow-lg shadow-amber-500/30'
-                    : 'border-slate-700 opacity-60 hover:opacity-100'
+                    ? 'border-amber-500 ring-2 ring-amber-400 scale-105 shadow-md'
+                    : 'border-slate-200 opacity-60 hover:opacity-100 hover:border-slate-400'
                 }`}
               >
                 <img src={url} alt={`Avatar ${idx + 1}`} className="w-full h-full object-cover" />
@@ -147,12 +147,12 @@ export const PlayerModal: React.FC<PlayerModalProps> = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-3 pt-4 border-t border-slate-800">
-          <Button variant="ghost" type="button" onClick={onClose} disabled={loading}>
-            Cancel
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <Button variant="outline" type="button" onClick={onClose} disabled={loading}>
+            Annuler
           </Button>
-          <Button variant="primary" type="submit" loading={loading} icon={<Check className="w-4 h-4" />}>
-            {initialPlayer ? 'Save Changes' : 'Register Player'}
+          <Button variant="gold" type="submit" loading={loading} icon={<Check className="w-4 h-4" />}>
+            {initialPlayer ? 'Enregistrer' : 'Inscrire le Joueur'}
           </Button>
         </div>
       </form>

@@ -12,6 +12,18 @@ interface CardPickerProps {
   maxSelection?: number;
 }
 
+const RARITY_MAP: { [key: string]: string } = {
+  Toutes: 'All',
+  Commune: 'Common',
+  Rare: 'Rare',
+  Épique: 'Epic',
+  Légendaire: 'Legendary',
+  Champion: 'Champion',
+};
+
+const RARITY_LABELS = ['Toutes', 'Commune', 'Rare', 'Épique', 'Légendaire', 'Champion'];
+const ELIXIRS: (number | 'Tous')[] = ['Tous', 1, 2, 3, 4, 5, 6, 7, 8, 9];
+
 export const CardPicker: React.FC<CardPickerProps> = ({
   selectedCardIds,
   onToggleCard,
@@ -20,27 +32,25 @@ export const CardPicker: React.FC<CardPickerProps> = ({
   maxSelection = 8,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRarity, setSelectedRarity] = useState<string>('All');
-  const [selectedElixir, setSelectedElixir] = useState<number | 'All'>('All');
-
-  const rarities = ['All', 'Common', 'Rare', 'Epic', 'Legendary', 'Champion'];
-  const elixirs: (number | 'All')[] = ['All', 1, 2, 3, 4, 5, 6, 7, 8, 9];
+  const [selectedRarityLabel, setSelectedRarityLabel] = useState<string>('Toutes');
+  const [selectedElixir, setSelectedElixir] = useState<number | 'Tous'>('Tous');
 
   const filteredCards = useMemo(() => {
+    const targetRarity = RARITY_MAP[selectedRarityLabel] || 'All';
     return CLASH_ROYALE_CARDS.filter((card) => {
       // Search filter
       const matchesSearch = card.name.toLowerCase().includes(searchTerm.toLowerCase());
       // Rarity filter
-      const matchesRarity = selectedRarity === 'All' || card.rarity === selectedRarity;
+      const matchesRarity = targetRarity === 'All' || card.rarity === targetRarity;
       // Elixir filter
-      const matchesElixir = selectedElixir === 'All' || card.elixir_cost === selectedElixir;
+      const matchesElixir = selectedElixir === 'Tous' || card.elixir_cost === selectedElixir;
 
       return matchesSearch && matchesRarity && matchesElixir;
     });
-  }, [searchTerm, selectedRarity, selectedElixir]);
+  }, [searchTerm, selectedRarityLabel, selectedElixir]);
 
   return (
-    <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-4 flex flex-col gap-4">
+    <div className="bg-slate-50 border border-slate-200/90 rounded-2xl p-4 flex flex-col gap-3.5 shadow-sm">
       {/* Search & Filters Bar */}
       <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between">
         {/* Search Input */}
@@ -50,44 +60,44 @@ export const CardPicker: React.FC<CardPickerProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search card name..."
-            className="w-full bg-[#0a0d14] border border-slate-700/80 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+            placeholder="Rechercher une carte Clash Royale..."
+            className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-semibold"
           />
         </div>
 
         {/* Rarity Tabs */}
         <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
-          <Filter className="w-3.5 h-3.5 text-slate-500 shrink-0 ml-1" />
-          {rarities.map((r) => (
+          <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0 ml-1" />
+          {RARITY_LABELS.map((label) => (
             <button
-              key={r}
-              onClick={() => setSelectedRarity(r)}
-              className={`text-xs font-semibold px-2.5 py-1 rounded-lg transition-colors cursor-pointer shrink-0 ${
-                selectedRarity === r
+              key={label}
+              onClick={() => setSelectedRarityLabel(label)}
+              className={`text-xs font-bold px-2.5 py-1 rounded-lg transition-colors cursor-pointer shrink-0 ${
+                selectedRarityLabel === label
                   ? 'bg-amber-500 text-slate-950 shadow-sm'
-                  : 'bg-slate-800/60 text-slate-400 hover:text-slate-200 hover:bg-slate-800'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >
-              {r}
+              {label}
             </button>
           ))}
         </div>
       </div>
 
       {/* Elixir Filter Quick Bar */}
-      <div className="flex items-center gap-1.5 overflow-x-auto border-t border-slate-800/60 pt-3">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-400 flex items-center gap-1 mr-2">
-          <Droplets className="w-3 h-3 fill-purple-400" />
-          Cost:
+      <div className="flex items-center gap-1.5 overflow-x-auto border-t border-slate-200/80 pt-3">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1 mr-2">
+          <Droplets className="w-3 h-3 fill-purple-600" />
+          Élixir :
         </span>
-        {elixirs.map((cost) => (
+        {ELIXIRS.map((cost) => (
           <button
             key={String(cost)}
             onClick={() => setSelectedElixir(cost)}
             className={`w-7 h-7 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center justify-center shrink-0 ${
               selectedElixir === cost
-                ? 'bg-purple-600 text-white shadow-md shadow-purple-600/30 ring-1 ring-purple-400'
-                : 'bg-slate-800/80 text-slate-400 hover:text-slate-100 hover:bg-slate-700'
+                ? 'bg-purple-600 text-white shadow-sm ring-1 ring-purple-400'
+                : 'bg-white border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-100'
             }`}
           >
             {cost}
@@ -120,8 +130,8 @@ export const CardPicker: React.FC<CardPickerProps> = ({
           );
         })}
         {filteredCards.length === 0 && (
-          <div className="col-span-full py-12 text-center text-slate-500 text-xs">
-            No cards found matching your search and filter criteria.
+          <div className="col-span-full py-10 text-center text-slate-400 text-xs font-medium">
+            Aucune carte trouvée correspondant à vos critères de recherche.
           </div>
         )}
       </div>

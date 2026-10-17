@@ -1,5 +1,5 @@
-import { request, ApiResponse } from './apiClient';
-import { GameRegistrationPayload, GameRegistrationResponse, Card } from '../types/api';
+import { axiosInstance } from './apiClient';
+import type { GameRegistrationPayload, GameRegistrationResponse, Card } from '../types/api';
 import { tournamentsApi } from './tournamentsApi';
 
 export interface RegisteredGameRecord {
@@ -49,48 +49,55 @@ export const matchesApi = {
     p2Id: number
   ): Promise<GameRegistrationResponse> {
     try {
-      const response = await request<GameRegistrationResponse>(
+      const response = await axiosInstance.post(
         `/api/matches/${matchId}/games`,
-        {
-          method: 'POST',
-          body: JSON.stringify(payload),
-        }
+        payload
       );
 
-      // Record in local history for analytics
       this.recordLocalGame(matchId, payload, p1Id, p2Id);
-
-      return response;
+      return response.data;
     } catch (error) {
-      console.warn(`[matchesApi] Backend POST /api/matches/${matchId}/games failed or unavailable:`, error);
-      
-      // If server returned a business rule error (409, 400), rethrow it
-      if ((error as { statusCode?: number }).statusCode === 409 || (error as { statusCode?: number }).statusCode === 400) {
+      console.warn(`[matchesApi] Backend POST /api/matches/${matchId}/games failed:`, error);
+
+      // If server returned a business rule error (409, 400), propagate it to UI
+      if ((error as any)?.statusCode === 409 || (error as any)?.statusCode === 400) {
         throw error;
       }
 
-      // If backend is offline, update local fixtures & record game
+      // If backend is offline, update local fixtures & games
       this.recordLocalGame(matchId, payload, p1Id, p2Id);
 
-      // Update local fixtures status
-      const fixtures = tournamentsApi.getLocalFixtures(tournamentId);
-      const fixture = fixtures.find((f) => f.matchId === matchId);
-      if (fixture) {
+      const localFixtures = tournamentsApi.getLocalFixtures(tournamentId);
+      const fixtureIndex = localFixtures.findIndex((f) => f.matchId === matchId);
+
+      let fixtureCompleted = false;
+      if (fixtureIndex !== -1) {
+        const fixture = localFixtures[fixtureIndex];
         if (payload.winnerId === p1Id) {
-          fixture.player1.points = (fixture.player1.points || 0) + 3;
+          fixture.player1.points += 1;
         } else {
-          fixture.player2.points = (fixture.player2.points || 0) + 3;
+          fixture.player2.points += 1;
         }
-        fixture.status = 'completed';
-        tournamentsApi.saveLocalFixtures(tournamentId, fixtures);
+
+        const requiredWins = fixture.isTiebreaker ? 3 : 2;
+        if (fixture.player1.points >= requiredWins || fixture.player2.points >= requiredWins) {
+          fixture.status = 'completed';
+          fixtureCompleted = true;
+        } else {
+          fixture.status = 'in_progress';
+        }
+
+        tournamentsApi.saveLocalFixtures(tournamentId, localFixtures);
       }
 
       return {
         success: true,
-        message: 'Game recorded successfully (Local state synchronized).',
+        message: fixtureCompleted
+          ? 'Game registered locally. Fixture completed.'
+          : 'Game registered locally.',
         data: {
           matchGameId: Date.now(),
-          fixtureCompleted: true,
+          fixtureCompleted,
           winnerId: payload.winnerId,
         },
       };
@@ -103,8 +110,8 @@ export const matchesApi = {
     p1Id: number,
     p2Id: number
   ) {
-    const list = getStoredGames();
-    list.push({
+    const games = getStoredGames();
+    games.push({
       id: Date.now(),
       matchId,
       gameNumber: payload.gameNumber,
@@ -121,68 +128,86 @@ export const matchesApi = {
       },
       timestamp: new Date().toISOString(),
     });
-    saveStoredGames(list);
+    saveStoredGames(games);
   },
 
-  // Calculate card cooldowns based on recent games for a player
   calculatePlayerCooldowns(
     playerId: number,
     cooldownDuration: number,
     allCards: Card[]
   ): { bannedCards: Card[]; availableCards: Card[]; remainingMatches: Map<number, number> } {
+    const remainingMatches = new Map<number, number>();
     if (cooldownDuration <= 0) {
-      return {
-        bannedCards: [],
-        availableCards: allCards,
-        remainingMatches: new Map(),
-      };
+      return { bannedCards: [], availableCards: allCards, remainingMatches };
     }
-
-    const allGames = getStoredGames();
-    // Filter games involving this player, newest first
-    const playerGames = allGames
-      .filter((g) => g.player1.id === playerId || g.player2.id === playerId)
-      .sort((a, b) => b.id - a.id);
-
-    const recentGames = playerGames.slice(0, cooldownDuration);
-    const bannedCardIdToRemaining = new Map<number, number>();
-
-    recentGames.forEach((game, gameIdx) => {
+    const games = getStoredGames();
+    const playerGames = games.filter(
+      (g) => g.player1.id === playerId || g.player2.id === playerId
+    );
+    const recentGames = playerGames.slice(-cooldownDuration);
+    const bannedCardIds = new Set<number>();
+    recentGames.forEach((game, idx) => {
+      const matchesAgo = recentGames.length - idx;
+      const remaining = cooldownDuration - matchesAgo + 1;
       const cardIds = game.player1.id === playerId ? game.player1.cardIds : game.player2.cardIds;
-      const gamesRemaining = cooldownDuration - gameIdx;
-      for (const cardId of cardIds) {
-        if (!bannedCardIdToRemaining.has(cardId) || (bannedCardIdToRemaining.get(cardId)! < gamesRemaining)) {
-          bannedCardIdToRemaining.set(cardId, gamesRemaining);
-        }
+      for (const id of cardIds) {
+        bannedCardIds.add(id);
+        remainingMatches.set(id, Math.max(1, remaining));
       }
     });
-
-    const bannedCards = allCards.filter((c) => bannedCardIdToRemaining.has(c.id));
-    const availableCards = allCards.filter((c) => !bannedCardIdToRemaining.has(c.id));
-
-    return {
-      bannedCards,
-      availableCards,
-      remainingMatches: bannedCardIdToRemaining,
-    };
+    const bannedCards = allCards.filter((c) => bannedCardIds.has(c.id));
+    const availableCards = allCards.filter((c) => !bannedCardIds.has(c.id));
+    return { bannedCards, availableCards, remainingMatches };
   },
 
-  // Check if player already registered this exact 8-card combination in the tournament
   checkDuplicateDeck(playerId: number, cardIds: number[]): boolean {
     if (cardIds.length !== 8) return false;
-    const sortedHash = [...cardIds].sort((a, b) => a - b).join('-');
-    
-    const allGames = getStoredGames();
-    return allGames.some((g) => {
-      if (g.player1.id === playerId) {
-        const h = [...g.player1.cardIds].sort((a, b) => a - b).join('-');
-        if (h === sortedHash) return true;
+    const currentSorted = [...cardIds].sort((a, b) => a - b).join(',');
+    const games = getStoredGames();
+    const playerGames = games.filter(
+      (g) => g.player1.id === playerId || g.player2.id === playerId
+    );
+    for (const g of playerGames) {
+      const existingCards = g.player1.id === playerId ? g.player1.cardIds : g.player2.cardIds;
+      const existingSorted = [...existingCards].sort((a, b) => a - b).join(',');
+      if (currentSorted === existingSorted) return true;
+    }
+    return false;
+  },
+
+  validateDeckRules(
+    selectedCards: Card[],
+    bannedCards: Card[] = [],
+    playerRecentDecks: number[][] = [],
+    banDuplicateDecks = true
+  ): { valid: boolean; reason?: string } {
+    if (selectedCards.length !== 8) {
+      return { valid: false, reason: 'A valid Clash Royale battle deck must contain exactly 8 cards.' };
+    }
+
+    const bannedCardIds = new Set(bannedCards.map((c) => c.id));
+    for (const card of selectedCards) {
+      if (bannedCardIds.has(card.id)) {
+        return {
+          valid: false,
+          reason: `Card "${card.name}" is currently on cooldown / exhausted for this player.`,
+        };
       }
-      if (g.player2.id === playerId) {
-        const h = [...g.player2.cardIds].sort((a, b) => a - b).join('-');
-        if (h === sortedHash) return true;
+    }
+
+    if (banDuplicateDecks && playerRecentDecks.length > 0) {
+      const currentDeckSorted = selectedCards.map((c) => c.id).sort((a, b) => a - b).join(',');
+      for (const deck of playerRecentDecks) {
+        const existingDeckSorted = [...deck].sort((a, b) => a - b).join(',');
+        if (currentDeckSorted === existingDeckSorted) {
+          return {
+            valid: false,
+            reason: 'This player has already used this exact 8-card combination in this tournament (Duplicate Deck Rule).',
+          };
+        }
       }
-      return false;
-    });
+    }
+
+    return { valid: true };
   },
 };
