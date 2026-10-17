@@ -4,8 +4,6 @@ ADD CONSTRAINT fk_cooldowns_match_game
     FOREIGN KEY (match_game_id)
     REFERENCES match_games(id);
 
-ALTER TABLE player_decks
-ADD CONSTRAINT uq_player_deck_tournament_hash
-UNIQUE (tournament_id, player_id, deck_hash);
-
-select * from match_games;
+-- Duplicate-deck enforcement is performed transactionally by the API because
+-- it depends on tournaments.ban_duplicate_decks. A table-wide UNIQUE key would
+-- incorrectly forbid duplicates in tournaments where that setting is disabled.

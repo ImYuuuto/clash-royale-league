@@ -86,7 +86,8 @@ CREATE TABLE card_cooldowns (
     FOREIGN KEY (card_id) REFERENCES cards(id)
 );
 
--- Unique 8-Card Deck Signatures
+-- 8-Card Deck Signatures. Duplicate prevention is conditional on the
+-- tournament setting and is enforced transactionally by the API.
 CREATE TABLE player_decks (
     id INT AUTO_INCREMENT PRIMARY KEY,
     tournament_id INT NOT NULL,
