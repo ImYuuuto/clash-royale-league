@@ -1,8 +1,12 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig, lazyPlugins } from "vite-plus";
+import tailwindcss from "@tailwindcss/vite"
 
 // https://vite.dev/config/
 export default defineConfig({
+  // Electron loads the production page from file://, so generated assets must
+  // resolve relative to dist/index.html rather than the filesystem root.
+  base: "./",
   server: {
     proxy: {
       "/api": {
@@ -38,5 +42,7 @@ export default defineConfig({
       },
     ],
   },
-  plugins: lazyPlugins(() => [react()]),
+  plugins: lazyPlugins(() => [react(), 
+    tailwindcss(),
+  ]),
 });

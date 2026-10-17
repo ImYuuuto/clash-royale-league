@@ -4,6 +4,10 @@ const fs = require("node:fs");
 const { spawn } = require("node:child_process");
 const mysql = require("mysql2/promise");
 
+if (process.env.CR_LEAGUE_USER_DATA_DIR) {
+  app.setPath("userData", path.resolve(process.env.CR_LEAGUE_USER_DATA_DIR));
+}
+
 const API_PORT = 3000;
 const API_URL = `http://127.0.0.1:${API_PORT}`;
 let mainWindow;
@@ -97,7 +101,11 @@ function createWindow() {
       nodeIntegration: false,
     },
   });
-  mainWindow.loadFile(path.join(app.getAppPath(), "frontend", "dist", "index.html"));
+  if (process.env.VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
+  } else {
+    mainWindow.loadFile(path.join(app.getAppPath(), "frontend", "dist", "index.html"));
+  }
   mainWindow.on("closed", () => { mainWindow = undefined; });
 }
 
