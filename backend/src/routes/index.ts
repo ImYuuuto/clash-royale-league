@@ -1,6 +1,7 @@
 import { Router } from "express";
-import fixtureRoutes from "./fixture.routes.js";
 import gameRoutes from "./game.routes.js";
+import playerRoutes from "./player.routes.js";
+import tournamentRoutes from "./tournament.routes.js";
 
 const router = Router();
 
@@ -11,7 +12,8 @@ router.get("/", (_req, res) => {
   });
 });
 
-router.use("/tournaments", fixtureRoutes);
+router.use("/players", playerRoutes);
+router.use("/tournaments", tournamentRoutes);
 router.use("/matches", gameRoutes);
 
 export default router;
