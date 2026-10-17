@@ -1,6 +1,9 @@
 
-import "dotenv/config";
+import dotenv from "dotenv";
 import mysql from "mysql2/promise";
+
+const settingsPath = process.env.CR_LEAGUE_SETTINGS_PATH;
+dotenv.config(settingsPath ? { path: settingsPath } : undefined);
 
 function getRequiredEnv(key: string): string {
   const value = process.env[key];

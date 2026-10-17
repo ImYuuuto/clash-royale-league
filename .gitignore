@@ -20,6 +20,8 @@ coverage/
 # Build output
 dist/
 build/
+release/
+build-resources/node/
 *.tsbuildinfo
 
 # Environment variables
