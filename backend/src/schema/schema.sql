@@ -1,4 +1,8 @@
+-- Active: 1790167023671@@127.0.0.1@3306@clash_royale_league
 -- Global Players
+drop database clash_royale_league;
+create database clash_royale_league;
+use clash_royale_league;
 CREATE TABLE players (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -61,7 +65,8 @@ CREATE TABLE match_games (
     p1_crowns INT DEFAULT 0,
     p2_crowns INT DEFAULT 0,
     FOREIGN KEY (match_id) REFERENCES matches(id),
-    FOREIGN KEY (winner_id) REFERENCES players(id)
+    FOREIGN KEY (winner_id) REFERENCES players(id),
+    UNIQUE KEY uq_match_games_match_game_number (match_id, game_number)
 );
 
 -- Cards Master Catalog
