@@ -19,7 +19,7 @@ type Fixture = {
   player2: { id: number; name: string; tag: string; points: number };
 };
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
+const API_URL = import.meta.env.VITE_API_URL || (typeof window !== "undefined" && window.location.protocol.startsWith("http") ? "" : "http://127.0.0.1:3000");
 
 function App() {
   const [apiState, setApiState] = useState<"checking" | "online" | "offline">("checking");
