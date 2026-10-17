@@ -29,6 +29,8 @@ build-resources/node/
 .env*
 .env.test
 .env.production
+!.env.example
+
 
 # Misc
 .DS_Store
