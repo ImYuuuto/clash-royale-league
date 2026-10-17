@@ -1,150 +1,161 @@
-const { app, BrowserWindow, ipcMain } = require('electron');
-const path = require('path');
-const { spawn } = require('child_process');
-const fs = require('fs');
-const http = require('http');
+const { app, BrowserWindow, dialog, ipcMain } = require("electron");
+const path = require("node:path");
+const fs = require("node:fs");
+const { spawn } = require("node:child_process");
+const mysql = require("mysql2/promise");
 
-const API_PORT = Number(process.env.PORT) || 3000;
+const API_PORT = 3000;
 const API_URL = `http://127.0.0.1:${API_PORT}`;
 let mainWindow;
 let backendProcess;
-let backendReady = false;
-const settingsPath = () => path.join(app.getPath('userData'), 'database.json');
 
-function readDatabaseSettings() {
+const settingsFile = () => path.join(app.getPath("userData"), "database.json");
+
+function readSettings() {
   try {
-    return JSON.parse(fs.readFileSync(settingsPath(), 'utf8'));
+    return JSON.parse(fs.readFileSync(settingsFile(), "utf8"));
   } catch {
     return null;
   }
 }
 
-function writeDatabaseSettings(settings) {
-  fs.mkdirSync(app.getPath('userData'), { recursive: true });
-  fs.writeFileSync(settingsPath(), JSON.stringify(settings, null, 2), { mode: 0o600 });
+function writeSettings(settings) {
+  fs.mkdirSync(path.dirname(settingsFile()), { recursive: true });
+  fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 2), { mode: 0o600 });
 }
 
-function checkApi() {
-  return new Promise((resolve) => {
-    const request = http.get(`${API_URL}/api/health`, (response) => {
-      response.resume();
-      resolve(response.statusCode === 200);
-    });
-    request.setTimeout(800, () => request.destroy());
-    request.on('error', () => resolve(false));
+function safeSettings(settings) {
+  if (!settings) return null;
+  const { DB_HOST, DB_PORT, DB_USER, DB_NAME } = settings;
+  return { DB_HOST, DB_PORT: String(DB_PORT), DB_USER, DB_NAME };
+}
+
+async function connectDatabase(settings) {
+  const connection = await mysql.createConnection({
+    host: settings.DB_HOST,
+    port: Number(settings.DB_PORT),
+    user: settings.DB_USER,
+    password: settings.DB_PASSWORD ?? "",
+    database: settings.DB_NAME,
+    connectTimeout: 5000,
   });
+  await connection.query("SELECT 1");
+  await connection.end();
 }
 
-async function waitForBackend() {
-  for (let attempt = 0; attempt < 50; attempt += 1) {
-    if (await checkApi()) {
-      backendReady = true;
-      return true;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 300));
-  }
-  return false;
-}
+function startBackend(settings) {
+  if (backendProcess && backendProcess.exitCode === null) return;
+  const backendDir = path.join(app.getAppPath(), "backend");
+  const entryPoint = path.join(backendDir, "dist", "server.js");
+  const childEnv = {
+    ...process.env,
+    ...settings,
+    PORT: String(API_PORT),
+    NODE_ENV: "production",
+  };
 
-function startBackend() {
-  const isPackaged = app.isPackaged;
-  const backendPath = isPackaged
-    ? path.join(__dirname, 'backend', 'dist', 'server.js')
-    : path.join(__dirname, 'backend', 'dist', 'server.js');
-  const settings = readDatabaseSettings();
-  const bundledNode = path.join(process.resourcesPath, 'node', process.platform === 'win32' ? 'node.exe' : 'bin/node');
-  const command = isPackaged && fs.existsSync(bundledNode) ? bundledNode : process.execPath;
-  const backendArgs = isPackaged
-    ? [backendPath]
-    : [path.join(__dirname, 'backend', 'node_modules', 'tsx', 'dist', 'cli.mjs'), 'watch', 'src/server.ts'];
-  const backendEnv = { ...process.env, PORT: String(API_PORT) };
-  if (settings) backendEnv.CR_LEAGUE_SETTINGS_PATH = settingsPath();
-
-  backendProcess = spawn(command, backendArgs, {
-    cwd: path.join(__dirname, 'backend'),
-    env: backendEnv,
-    stdio: 'inherit',
+  backendProcess = spawn(process.execPath, [entryPoint], {
+    cwd: backendDir,
+    env: { ...childEnv, ELECTRON_RUN_AS_NODE: "1" },
+    stdio: "ignore",
     windowsHide: true,
   });
-  backendProcess.on('error', (error) => console.error('Could not start API:', error));
-  backendProcess.on('exit', () => { backendReady = false; });
+  backendProcess.on("error", (error) => {
+    dialog.showErrorBox("API could not start", error.message);
+  });
+  backendProcess.on("exit", (code) => {
+    backendProcess = undefined;
+    if (code && !app.isQuitting) {
+      dialog.showErrorBox("API stopped", `The local API exited with code ${code}.`);
+    }
+  });
 }
 
-ipcMain.handle('database:status', async () => ({
-  configured: Boolean(readDatabaseSettings() || (process.env.DB_HOST && process.env.DB_USER && process.env.DB_NAME)),
-  apiReady: backendReady || await checkApi(),
-}));
-
-ipcMain.handle('database:save', async (_event, settings) => {
-  const port = Number(settings?.DB_PORT ?? 3306);
-  if (!settings || typeof settings.DB_HOST !== 'string' || !settings.DB_HOST.trim() ||
-      typeof settings.DB_USER !== 'string' || !settings.DB_USER.trim() ||
-      typeof settings.DB_NAME !== 'string' || !settings.DB_NAME.trim() ||
-      !Number.isInteger(port) || port < 1 || port > 65535) {
-    return { success: false, message: 'Enter a host, username, database name, and a valid port.' };
+async function waitForApi(timeoutMs = 15000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    try {
+      const response = await fetch(`${API_URL}/api/health`);
+      if (response.ok) return;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+    }
   }
-
-  const cleaned = {
-    DB_HOST: settings.DB_HOST.trim(),
-    DB_PORT: String(port),
-    DB_USER: settings.DB_USER.trim(),
-    DB_PASSWORD: String(settings.DB_PASSWORD ?? ''),
-    DB_NAME: settings.DB_NAME.trim(),
-  };
-  writeDatabaseSettings(cleaned);
-  if (backendProcess && !backendProcess.killed) backendProcess.kill();
-  startBackend();
-  const ready = await waitForBackend();
-  if (!ready) return { success: false, message: 'The API did not start. Check the database details and make sure MySQL is running.' };
-  const dbResponse = await fetch(`${API_URL}/api/health/db`);
-  return dbResponse.ok
-    ? { success: true }
-    : { success: false, message: 'The API started, but it could not connect to that database. Check the database details and try again.' };
-});
+  throw new Error("The local API did not become ready in time.");
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 1180,
-    height: 780,
-    minWidth: 760,
-    minHeight: 600,
-    backgroundColor: '#10131b',
+    width: 1280,
+    height: 850,
+    minWidth: 960,
+    minHeight: 680,
+    backgroundColor: "#10131a",
     webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      nodeIntegration: false,
+      preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,
+      nodeIntegration: false,
     },
   });
-
-  const devUrl = process.env.VITE_DEV_SERVER_URL;
-  if (!app.isPackaged && devUrl) {
-    mainWindow.loadURL(devUrl);
-  } else {
-    mainWindow.loadFile(path.join(__dirname, 'frontend', 'dist', 'index.html'));
-  }
+  mainWindow.loadFile(path.join(app.getAppPath(), "frontend", "dist", "index.html"));
+  mainWindow.on("closed", () => { mainWindow = undefined; });
 }
 
-app.whenReady().then(() => {
-  ipcMain.handle('database:settings', () => {
-    const settings = readDatabaseSettings();
-    if (!settings) return null;
-    return { ...settings, DB_PASSWORD: '' };
-  });
-  const savedSettings = readDatabaseSettings();
-  if (savedSettings || (process.env.DB_HOST && process.env.DB_USER && process.env.DB_NAME)) {
-    startBackend();
-    void waitForBackend();
+ipcMain.handle("database:get-settings", () => safeSettings(readSettings()));
+ipcMain.handle("database:get-status", async () => {
+  const settings = readSettings();
+  if (!settings) return { configured: false, apiReady: false };
+  try {
+    await connectDatabase(settings);
+    return { configured: true, apiReady: Boolean(backendProcess && backendProcess.exitCode === null) };
+  } catch {
+    return { configured: false, apiReady: Boolean(backendProcess && backendProcess.exitCode === null) };
+  }
+});
+ipcMain.handle("database:save-settings", async (_event, input) => {
+  const settings = {
+    DB_HOST: String(input?.DB_HOST ?? "").trim(),
+    DB_PORT: String(input?.DB_PORT ?? "3306").trim(),
+    DB_USER: String(input?.DB_USER ?? "").trim(),
+    DB_PASSWORD: String(input?.DB_PASSWORD ?? ""),
+    DB_NAME: String(input?.DB_NAME ?? "").trim(),
+  };
+  const port = Number(settings.DB_PORT);
+  if (!settings.DB_HOST || !settings.DB_USER || !settings.DB_NAME || !Number.isInteger(port) || port < 1 || port > 65535) {
+    return { success: false, message: "Enter a host, valid port, username, and database name." };
+  }
+  try {
+    await connectDatabase(settings);
+    writeSettings(settings);
+    startBackend(settings);
+    await waitForApi();
+    return { success: true };
+  } catch (error) {
+    return { success: false, message: error instanceof Error ? error.message : "Could not connect to MySQL." };
+  }
+});
+
+app.whenReady().then(async () => {
+  const settings = readSettings();
+  if (settings) {
+    startBackend(settings);
+    try {
+      await waitForApi();
+    } catch (error) {
+      dialog.showErrorBox("API startup failed", error.message);
+    }
   }
   createWindow();
-  app.on('activate', () => {
+  app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
 });
 
-app.on('before-quit', () => {
-  if (backendProcess && !backendProcess.killed) backendProcess.kill();
+app.on("before-quit", () => {
+  app.isQuitting = true;
+  if (backendProcess && backendProcess.exitCode === null) backendProcess.kill();
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
 });

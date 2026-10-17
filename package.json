@@ -1,55 +1,58 @@
 {
-  "name": "cr-league-app",
+  "name": "cr-league-manager",
   "version": "1.0.0",
-  "description": "",
+  "private": true,
+  "description": "Local desktop app for managing Clash Royale tournaments",
   "main": "main.js",
   "scripts": {
     "dev": "node scripts/dev.js",
-    "build": "npm --prefix frontend run build && npm --prefix backend run build",
-    "start": "npm run build && electron .",
-    "package:dir": "npm run build && node scripts/copy-node.js && electron-builder --dir --config.npmRebuild=false",
-    "package:win": "npm run build && node scripts/copy-node.js && electron-builder --win nsis",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev:electron": "electron .",
+    "build": "npm run build --prefix backend && npm run build --prefix frontend",
+    "start": "electron .",
+    "dist": "npm run build && electron-builder"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
-    "electron": "^44.8.0",
-    "electron-builder": "^26.15.3"
+    "electron": "^37.2.6",
+    "electron-builder": "^26.0.12",
+    "wait-on": "^8.0.3"
   },
   "build": {
     "appId": "com.crleaguemanager.desktop",
     "productName": "CR League Manager",
-    "npmRebuild": false,
-    "asar": true,
-    "asarUnpack": ["backend/**"],
-    "directories": { "output": "release" },
+    "directories": {
+      "output": "release"
+    },
     "files": [
       "main.js",
       "preload.js",
-      "frontend/dist/**/*",
+      "package.json",
       "backend/dist/**/*",
       "backend/package.json",
       "backend/node_modules/**/*",
-      "node_modules/**/*",
-      "!node_modules/electron/**/*",
-      "!node_modules/.cache/**/*",
-      "!frontend/node_modules/**/*",
-      "!backend/node_modules/typescript/**/*",
-      "!backend/node_modules/tsx/**/*",
-      "!backend/node_modules/ts-node-dev/**/*",
-      "!backend/node_modules/@types/**/*"
+      "node_modules/mysql2/**/*",
+      "node_modules/denque/**/*",
+      "node_modules/iconv-lite/**/*",
+      "node_modules/long/**/*",
+      "node_modules/lru.min/**/*",
+      "node_modules/sqlstring/**/*",
+      "node_modules/named-placeholders/**/*",
+      "node_modules/aws-ssl-profiles/**/*",
+      "node_modules/uuid/**/*",
+      "node_modules/safer-buffer/**/*",
+      "node_modules/generate-function/**/*",
+      "node_modules/is-property/**/*",
+      "frontend/dist/**/*"
     ],
-    "extraResources": [{ "from": "build-resources/node", "to": "node" }],
-    "win": { "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "asar": true,
+    "win": {
+      "target": "nsis"
+    },
     "nsis": {
       "oneClick": false,
-      "allowToChangeInstallationDirectory": true,
-      "createDesktopShortcut": true,
-      "createStartMenuShortcut": true,
-      "shortcutName": "CR League Manager"
+      "allowToChangeInstallationDirectory": true
     }
+  },
+  "dependencies": {
+    "mysql2": "^3.24.6"
   }
 }
