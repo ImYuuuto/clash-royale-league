@@ -69,29 +69,38 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return tournaments.find((t) => t.id === activeTournamentId) || tournaments[0] || null;
   }, [tournaments, activeTournamentId]);
 
+  // Keep fixture refreshes keyed to the selected tournament ID. The tournament
+  // object itself changes when its details are refreshed from the API.
+  const activeTournamentIdForRefresh = activeTournament?.id ?? null;
+
   const refreshFixtures = useCallback(async () => {
-    if (!activeTournament) {
+    const tournamentId = activeTournamentIdForRefresh;
+    if (tournamentId === null) {
       setFixtures([]);
       return;
     }
     setLoadingFixtures(true);
     try {
       const [data, updatedTournament] = await Promise.all([
-        tournamentsApi.getFixtures(activeTournament.id),
-        tournamentsApi.getById(activeTournament.id),
+        tournamentsApi.getFixtures(tournamentId),
+        tournamentsApi.getById(tournamentId),
       ]);
       setFixtures(data);
       if (updatedTournament) {
-        setTournaments((current) => current.map((tournament) =>
-          tournament.id === updatedTournament.id ? updatedTournament : tournament,
-        ));
+        setTournaments((current) => {
+          const existing = current.find((tournament) => tournament.id === updatedTournament.id);
+          if (!existing || JSON.stringify(existing) === JSON.stringify(updatedTournament)) return current;
+          return current.map((tournament) =>
+            tournament.id === updatedTournament.id ? updatedTournament : tournament,
+          );
+        });
       }
     } catch (err) {
       console.error('Error refreshing fixtures:', err);
     } finally {
       setLoadingFixtures(false);
     }
-  }, [activeTournament]);
+  }, [activeTournamentIdForRefresh]);
 
   const refreshAll = useCallback(async () => {
     await checkHealth();
@@ -109,10 +118,10 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   }, [checkHealth, loadTournaments]);
 
   useEffect(() => {
-    if (activeTournament) {
+    if (activeTournamentIdForRefresh !== null) {
       void refreshFixtures();
     }
-  }, [activeTournament, refreshFixtures]);
+  }, [activeTournamentIdForRefresh, refreshFixtures]);
 
   const standings = useMemo(() => {
     if (!activeTournament) return [];
