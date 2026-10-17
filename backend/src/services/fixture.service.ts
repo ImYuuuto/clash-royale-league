@@ -35,6 +35,7 @@ interface GameRow extends RowDataPacket {
 
 interface CooldownRow extends RowDataPacket {
   card_id: number;
+  remaining_games: number;
 }
 
 async function getPlayerCardAvailability(
@@ -88,22 +89,47 @@ async function getPlayerCardAvailability(
 
   const [cooldowns] = await pool.execute<CooldownRow[]>(
     `
-    SELECT DISTINCT card_id
-    FROM card_cooldowns
-    WHERE tournament_id = ?
-      AND player_id = ?
-      AND match_game_id IN (${placeholders})
+    SELECT
+      cc.card_id,
+      COUNT(DISTINCT recent.game_id) AS remaining_games
+    FROM card_cooldowns cc
+    JOIN (
+      SELECT mg.id AS game_id, mg.game_number, m.match_number
+      FROM player_decks pd
+      JOIN match_games mg ON mg.id = pd.match_game_id
+      JOIN matches m ON m.id = mg.match_id
+      WHERE pd.tournament_id = ?
+        AND pd.player_id = ?
+        AND m.tournament_id = ?
+      ORDER BY m.match_number DESC, mg.game_number DESC, mg.id DESC
+      LIMIT ?
+    ) recent ON recent.game_id = cc.match_game_id
+    WHERE cc.tournament_id = ?
+      AND cc.player_id = ?
+    GROUP BY cc.card_id
     `,
-    [tournamentId, playerId, ...recentGameIds],
+    [
+      tournamentId,
+      playerId,
+      tournamentId,
+      cooldownDuration,
+      tournamentId,
+      playerId,
+    ],
   );
 
-  const bannedIds = new Set(
-    cooldowns.map((cooldown) => cooldown.card_id),
+  const remainingByCard = new Map(
+    cooldowns.map((cooldown) => [cooldown.card_id, cooldown.remaining_games]),
   );
 
   return {
-    bannedCards: allCards.filter((card) => bannedIds.has(card.id)),
-    availableCards: allCards.filter((card) => !bannedIds.has(card.id)),
+    bannedCards: allCards
+      .filter((card) => remainingByCard.has(card.id))
+      .map((card) => ({
+        ...card,
+        remainingCooldownGames: remainingByCard.get(card.id) ?? 0,
+      })),
+    availableCards: allCards.filter((card) => !remainingByCard.has(card.id)),
   };
 }
 
@@ -121,7 +147,7 @@ export async function getTournamentFixtures(tournamentId: number) {
 
 if (!tournament) return null;
 
-const cooldownDuration = tournament.cooldown_duration;
+  const cooldownDuration = tournament.cooldown_duration;
 
   const [fixtures] = await pool.execute<FixtureRow[]>(
     `
@@ -170,20 +196,40 @@ const cooldownDuration = tournament.cooldown_duration;
 
   const enrichedFixtures = await Promise.all(
     fixtures.map(async (fixture) => {
-      const [player1Cards, player2Cards] = await Promise.all([
-        getPlayerCardAvailability(
-          tournamentId,
-          fixture.player1_id,
-          cooldownDuration,
-          allCards,
-        ),
-        getPlayerCardAvailability(
-          tournamentId,
-          fixture.player2_id,
-          cooldownDuration,
-          allCards,
-        ),
-      ]);
+      const playerCards = fixture.status === "completed"
+        ? null
+        : await Promise.all([
+          getPlayerCardAvailability(
+            tournamentId,
+            fixture.player1_id,
+            cooldownDuration,
+            allCards,
+          ),
+          getPlayerCardAvailability(
+            tournamentId,
+            fixture.player2_id,
+            cooldownDuration,
+            allCards,
+          ),
+        ]);
+
+      const player1 = {
+        id: fixture.player1_id,
+        name: fixture.player1_name,
+        tag: fixture.player1_tag,
+        points: fixture.player1_points,
+      };
+      const player2 = {
+        id: fixture.player2_id,
+        name: fixture.player2_name,
+        tag: fixture.player2_tag,
+        points: fixture.player2_points,
+      };
+
+      if (playerCards) {
+        Object.assign(player1, playerCards[0]);
+        Object.assign(player2, playerCards[1]);
+      }
 
       return {
         matchId: fixture.match_id,
@@ -191,21 +237,8 @@ const cooldownDuration = tournament.cooldown_duration;
         status: fixture.status,
         isTiebreaker: Boolean(fixture.is_tiebreaker),
 
-        player1: {
-          id: fixture.player1_id,
-          name: fixture.player1_name,
-          tag: fixture.player1_tag,
-          points: fixture.player1_points,
-          ...player1Cards,
-        },
-
-        player2: {
-          id: fixture.player2_id,
-          name: fixture.player2_name,
-          tag: fixture.player2_tag,
-          points: fixture.player2_points,
-          ...player2Cards,
-        },
+        player1,
+        player2,
       };
     }),
   );
