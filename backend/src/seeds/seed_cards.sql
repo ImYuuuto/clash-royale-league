@@ -136,4 +136,23 @@ INSERT INTO cards (id, name, rarity, elixir_cost, icon_url) VALUES
 (107, 'Monk', 'Champion', 5, '/assets/cards/monk.png'),
 (108, 'Little Prince', 'Champion', 3, '/assets/cards/little-prince.png'),
 (109, 'Goblin Machine', 'Champion', 5, '/assets/cards/goblin-machine.png');
+INSERT INTO cards ( name, rarity, elixir_cost, icon_url) VALUES
+('Mighty Miner', 'Champion', 4, '/assets/cards/bomber.png'),
+( 'Golden Knight', 'Champion', 4, '/assets/cards/goblin-drill.png'),
+( 'Golden Knight', 'Champion', 4, '/assets/cards/goblin-hut.png');
+INSERT INTO cards ( name, rarity, elixir_cost, icon_url) VALUES
+('Suspicious Bush', 'Rare', 2, '/assets/cards/suspicious-bush.png'),
+( 'Goblin Curse', 'Epic', 2, '/assets/cards/goblin-curse.png'),
+( 'Vines', 'Epic', 3, '/assets/cards/vines.png'),
+( 'Minion Giant', 'Rare', 4, '/assets/cards/minion-giant.png'),
+( 'Rune Giant', 'Epic', 4, '/assets/cards/rune-giant.png'),
+( 'Goblin Demolisher', 'Rare', 4, '/assets/cards/goblin-demolisher.png'),
+( 'Void', 'Epic', 5, '/assets/cards/void.png'),
+( 'Ronin', 'Legendary', 5, '/assets/cards/ronin.png'),
+( 'Goblinstein', 'Champion', 2, '/assets/cards/goblinstein.png'),
+( 'Spirit Empress', 'Legendary', 2, '/assets/cards/spirit-empress.png'),
+( 'Boss Bandit', 'Legendary', 2, '/assets/cards/boss-bandit.png'),
+( 'Golden Knight', 'Champion', 4, '/assets/cards/goblin-hut.png');
+
+select * from cards where elixir_cost = 2;
 

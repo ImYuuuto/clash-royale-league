@@ -82,16 +82,28 @@ export const CardItem: React.FC<CardItemProps> = ({
 
       {/* Center: Card Illustration / Avatar */}
       <div className="flex-1 flex items-center justify-center relative my-1">
-        <div
-          className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-base shadow-inner border"
-          style={{
-            borderColor: rarityStyle.border,
-            color: rarityStyle.text,
-            background: 'linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.95))',
-          }}
-        >
-          {card.name.charAt(0)}
-        </div>
+        {card.icon_url ? (
+          <img
+            src={card.icon_url}
+            alt={card.name}
+            className="w-full h-full object-contain drop-shadow-md"
+            loading="lazy"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
+          />
+        ) : (
+          <div
+            className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-base shadow-inner border"
+            style={{
+              borderColor: rarityStyle.border,
+              color: rarityStyle.text,
+              background: 'linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.95))',
+            }}
+          >
+            {card.name.charAt(0)}
+          </div>
+        )}
 
         {/* Cooldown Lock Overlay */}
         {isBanned && (
