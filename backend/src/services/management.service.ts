@@ -166,6 +166,8 @@ export async function updateTournament(idInput: unknown, input: unknown) {
   if (body && Object.hasOwn(body, "status")) {
     const allowed: TournamentStatus[] = ["draft", "active", "tiebreaker", "completed"];
     if (typeof body.status !== "string" || !allowed.includes(body.status as TournamentStatus)) throw new ManagementError("status must be draft, active, tiebreaker, or completed");
+    if (body.status === "tiebreaker") throw new ManagementError("Create the tiebreaker through POST /api/tournaments/:id/tiebreaker", 409);
+    if (body.status === "completed" && existing.status === "completed") throw new ManagementError("Tournament is already completed", 409);
     if (existing.status === "completed" && body.status !== "completed") throw new ManagementError("A completed tournament cannot be reopened", 409);
     assignments.push("status = ?"); values.push(body.status);
   }
@@ -184,8 +186,102 @@ export async function updateTournament(idInput: unknown, input: unknown) {
     assignments.push("ban_duplicate_decks = ?"); values.push(body.banDuplicateDecks);
   }
   if (assignments.length === 0) throw new ManagementError("Provide at least one tournament field to update");
-  await pool.query<ResultSetHeader>(`UPDATE tournaments SET ${assignments.join(", ")} WHERE id = ?`, [...values, id]);
+  if (body && Object.hasOwn(body, "status")) {
+    const targetStatus = body.status as TournamentStatus;
+    const connection = await pool.getConnection();
+    try {
+      await connection.beginTransaction();
+      const [lockedRows] = await connection.execute<RowDataPacket[]>("SELECT status FROM tournaments WHERE id = ? FOR UPDATE", [id]);
+      const current = lockedRows[0] as (RowDataPacket & { status: TournamentStatus }) | undefined;
+      if (!current) throw new ManagementError("Tournament not found", 404);
+      if (targetStatus !== current.status) {
+        if (targetStatus === "active") {
+          if (current.status !== "draft") throw new ManagementError("Only a draft tournament can be started", 409);
+          const [counts] = await connection.execute<RowDataPacket[]>(
+            `SELECT COUNT(DISTINCT tp.player_id) AS players, COUNT(DISTINCT m.id) AS fixtures
+             FROM tournaments t LEFT JOIN tournament_players tp ON tp.tournament_id = t.id
+             LEFT JOIN matches m ON m.tournament_id = t.id WHERE t.id = ?`, [id],
+          );
+          const count = counts[0] as (RowDataPacket & { players: number; fixtures: number }) | undefined;
+          if (!count || Number(count.players) < 2 || Number(count.fixtures) < 1) {
+            throw new ManagementError("Enroll at least two players and generate fixtures before starting", 409);
+          }
+        } else if (targetStatus === "completed") {
+          if (current.status !== "active") throw new ManagementError("Only an active tournament can be completed directly", 409);
+          const [pending] = await connection.execute<RowDataPacket[]>(
+            "SELECT COUNT(*) AS total FROM matches WHERE tournament_id = ? AND status <> 'completed'", [id],
+          );
+          const [leaders] = await connection.execute<RowDataPacket[]>(
+            `SELECT tp.player_id, tp.points FROM tournament_players tp
+             WHERE tp.tournament_id = ? AND tp.points = (
+               SELECT MAX(points) FROM tournament_players WHERE tournament_id = ?
+             ) ORDER BY tp.player_id`, [id, id],
+          );
+          if (Number(pending[0]?.total ?? 0) > 0) throw new ManagementError("Complete all fixtures before completing the tournament", 409);
+          if (leaders.length !== 1) throw new ManagementError("The tournament is tied; create a tiebreaker fixture instead", 409);
+          assignments.push("winner_player_id = ?");
+          values.push((leaders[0] as RowDataPacket & { player_id: number }).player_id);
+        } else {
+          throw new ManagementError("This tournament status transition is not allowed", 409);
+        }
+      }
+      await connection.query<ResultSetHeader>(`UPDATE tournaments SET ${assignments.join(", ")} WHERE id = ?`, [...values, id]);
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
+  } else {
+    await pool.query<ResultSetHeader>(`UPDATE tournaments SET ${assignments.join(", ")} WHERE id = ?`, [...values, id]);
+  }
   return getTournament(id);
+}
+
+export async function createTiebreakerFixture(tournamentIdInput: unknown, playerIdsInput: unknown) {
+  const tournamentId = positiveId(tournamentIdInput, "tournament ID");
+  if (!Array.isArray(playerIdsInput) || playerIdsInput.length !== 2) {
+    throw new ManagementError("playerIds must contain exactly the two tied leaders");
+  }
+  const playerIds = playerIdsInput.map((value) => positiveId(value, "player ID"));
+  if (playerIds[0] === playerIds[1]) throw new ManagementError("Tiebreaker players must be different");
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [tournaments] = await connection.execute<RowDataPacket[]>("SELECT status FROM tournaments WHERE id = ? FOR UPDATE", [tournamentId]);
+    if (!tournaments[0]) throw new ManagementError("Tournament not found", 404);
+    if (tournaments[0].status !== "active") throw new ManagementError("Only an active tournament can enter a tiebreaker", 409);
+    const [pending] = await connection.execute<RowDataPacket[]>(
+      "SELECT COUNT(*) AS total FROM matches WHERE tournament_id = ? AND status <> 'completed'", [tournamentId],
+    );
+    if (Number(pending[0]?.total ?? 0) > 0) throw new ManagementError("Complete all regular fixtures before starting a tiebreaker", 409);
+    const [leaders] = await connection.execute<RowDataPacket[]>(
+      `SELECT tp.player_id, tp.points FROM tournament_players tp
+       WHERE tp.tournament_id = ? AND tp.points = (
+         SELECT MAX(points) FROM tournament_players WHERE tournament_id = ?
+       ) ORDER BY tp.player_id`, [tournamentId, tournamentId],
+    );
+    const leaderIds = leaders.map((row) => Number(row.player_id)).sort((a, b) => a - b);
+    const selectedIds = [...playerIds].sort((a, b) => a - b);
+    if (leaderIds.length !== 2 || leaderIds[0] !== selectedIds[0] || leaderIds[1] !== selectedIds[1]) {
+      throw new ManagementError("A Bo5 tiebreaker is supported when exactly two players are tied for first", 409);
+    }
+    const [maxRows] = await connection.execute<RowDataPacket[]>("SELECT COALESCE(MAX(match_number), 0) AS max_number FROM matches WHERE tournament_id = ?", [tournamentId]);
+    const matchNumber = Number(maxRows[0]?.max_number ?? 0) + 1;
+    const [result] = await connection.query<ResultSetHeader>(
+      `INSERT INTO matches (tournament_id, match_number, player1_id, player2_id, is_tiebreaker)
+       VALUES (?, ?, ?, ?, TRUE)`, [tournamentId, matchNumber, playerIds[0], playerIds[1]],
+    );
+    await connection.execute("UPDATE tournaments SET status = 'tiebreaker' WHERE id = ?", [tournamentId]);
+    await connection.commit();
+    return { matchId: result.insertId, tournamentId, matchNumber, player1Id: playerIds[0], player2Id: playerIds[1], format: "bo5" };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 export async function addTournamentPlayers(tournamentIdInput: unknown, playerIdsInput: unknown) {

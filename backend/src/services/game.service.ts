@@ -283,6 +283,16 @@ export async function registerGame(matchId: number, input: RegisterGameInput) {
     }
 
     if (
+      (match.tournament_status === "tiebreaker" && !match.is_tiebreaker) ||
+      (match.tournament_status === "active" && match.is_tiebreaker)
+    ) {
+      throw new GameRegistrationError(
+        "This fixture is not eligible for game results in the current tournament stage",
+        409,
+      );
+    }
+
+    if (
       input.winnerId !== match.player1_id &&
       input.winnerId !== match.player2_id
     ) {
@@ -310,10 +320,9 @@ export async function registerGame(matchId: number, input: RegisterGameInput) {
       );
     }
 
-    const gamesToWin =
-      match.is_tiebreaker || match.tournament_status === "tiebreaker"
-        ? 3
-        : Math.ceil(match.match_format_bo / 2);
+    const gamesToWin = match.is_tiebreaker
+      ? 3
+      : Math.ceil(match.match_format_bo / 2);
 
     const player1WinsBefore = previousGames.filter(
       (game) => game.winner_id === match.player1_id,
@@ -513,6 +522,13 @@ export async function registerGame(matchId: number, input: RegisterGameInput) {
         `,
         [match.tournament_id, fixtureLoserId],
       );
+
+      if (match.is_tiebreaker) {
+        await connection.execute(
+          `UPDATE tournaments SET status = 'completed', winner_player_id = ? WHERE id = ?`,
+          [fixtureWinnerId, match.tournament_id],
+        );
+      }
     } else {
       await connection.execute(
         `UPDATE matches SET status = 'in_progress' WHERE id = ?`,
