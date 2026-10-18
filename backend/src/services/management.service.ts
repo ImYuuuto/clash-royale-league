@@ -20,8 +20,16 @@ function positiveId(value: unknown, label: string): number {
 
 export async function listPlayers() {
   const [rows] = await pool.execute<RowDataPacket[]>(
-    `SELECT id, name, player_tag AS playerTag, avatar_url AS avatarUrl, created_at AS createdAt
-     FROM players ORDER BY name, id`,
+    `SELECT p.id, p.name, p.player_tag AS playerTag, p.avatar_url AS avatarUrl, p.created_at AS createdAt,
+            COALESCE(SUM(tp.matches_played), 0) AS matchesPlayed,
+            COALESCE(SUM(tp.matches_won), 0) AS matchesWon,
+            COALESCE(SUM(tp.crowns_for), 0) AS crownsFor,
+            COALESCE(SUM(tp.crowns_against), 0) AS crownsAgainst,
+            COALESCE(SUM(tp.points), 0) AS points
+     FROM players p
+     LEFT JOIN tournament_players tp ON tp.player_id = p.id
+     GROUP BY p.id, p.name, p.player_tag, p.avatar_url, p.created_at
+     ORDER BY p.name, p.id`,
   );
   return rows;
 }

@@ -10,28 +10,30 @@ interface PlayerCardProps {
 }
 
 export const PlayerCard: React.FC<PlayerCardProps> = ({ player, onEdit, onDelete }) => {
+  const matchesPlayed = player.matches_played ?? 0;
+  const matchesWon = player.matches_won ?? 0;
   const winRate =
-    player.matches_played && player.matches_played > 0
-      ? Math.round(((player.matches_won ?? 0) / player.matches_played) * 100)
+    matchesPlayed > 0
+      ? Math.round((matchesWon / matchesPlayed) * 100)
       : 0;
 
   return (
-    <div className="bg-white border border-slate-200/90 hover:border-amber-400 hover:shadow-md rounded-2xl p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 group">
+    <div className="min-w-0 overflow-hidden bg-white border border-slate-200/90 hover:border-amber-400 hover:shadow-md rounded-2xl p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 group">
       {/* Top Header */}
       <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3.5">
-          <div className="relative">
+        <div className="flex min-w-0 items-center gap-3.5">
+          <div className="relative h-16 w-16 shrink-0">
             <PlayerAvatar
               src={player.avatar_url}
               name={player.name}
-              className="w-13 h-13 rounded-full object-cover border-2 border-slate-200 group-hover:border-amber-400 transition-colors shadow-sm"
+              className="block h-full w-full rounded-full object-cover object-center border-2 border-slate-200 group-hover:border-amber-400 transition-colors shadow-sm"
             />
             <div className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 p-0.5 rounded-full ring-2 ring-white shadow-sm">
               <Crown className="w-3 h-3 fill-slate-950" />
             </div>
           </div>
-          <div>
-            <h3 className="font-display font-bold text-lg text-slate-900 group-hover:text-amber-600 transition-colors tracking-wide leading-tight">
+          <div className="min-w-0">
+            <h3 className="break-words font-display font-bold text-lg text-slate-900 group-hover:text-amber-600 transition-colors tracking-wide leading-tight">
               {player.name}
             </h3>
             <span className="font-mono text-xs text-amber-700 font-bold bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200 inline-block mt-0.5">
@@ -79,7 +81,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ player, onEdit, onDelete
             <span>MATCHES</span>
           </div>
           <div className="font-display font-bold text-lg text-slate-800 mt-0.5">
-            {player.matches_won ?? 0} / {player.matches_played ?? 0}
+            {matchesWon} / {matchesPlayed}
           </div>
         </div>
 
