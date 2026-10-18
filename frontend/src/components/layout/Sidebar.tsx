@@ -86,7 +86,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
               {activeTournament.name}
             </div>
             <div className="text-[10px] font-semibold text-amber-400 mt-0.5">
-              BO{activeTournament.match_format_bo} • {activeTournament.cooldown_duration > 0 ? `${activeTournament.cooldown_duration} Cards CD` : 'Sans Cooldown'}
+              Match unique • {activeTournament.cooldown_duration > 0 ? `${activeTournament.cooldown_duration} Cards CD` : 'Sans Cooldown'}
             </div>
           </div>
         )}

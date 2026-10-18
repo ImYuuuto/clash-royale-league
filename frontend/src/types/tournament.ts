@@ -2,7 +2,7 @@ import type { Player } from './player';
 
 export type TournamentFormat = 'single_round_robin' | 'double_round_robin';
 export type CardCooldownDuration = 0 | 2 | 3;
-export type MatchFormatBo = 3 | 5;
+export type MatchFormatBo = 1 | 3 | 5;
 export type TiebreakerMode = 'bo5' | 'head_to_head' | 'shared_victory';
 export type TournamentStatus = 'draft' | 'active' | 'tiebreaker' | 'completed';
 

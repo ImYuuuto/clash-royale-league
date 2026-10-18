@@ -23,6 +23,15 @@ export interface BackendFixture {
   source?: 'backend' | 'local';
   status: 'scheduled' | 'in_progress' | 'completed';
   isTiebreaker: boolean;
+  game?: {
+    id: number;
+    gameNumber: number | null;
+    winnerId: number | null;
+    player1Crowns: number | null;
+    player2Crowns: number | null;
+    player1CardIds: number[];
+    player2CardIds: number[];
+  } | null;
   player1: PlayerStats;
   player2: PlayerStats;
 }

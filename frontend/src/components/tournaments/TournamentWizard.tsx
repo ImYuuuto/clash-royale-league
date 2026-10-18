@@ -26,7 +26,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
   const [format, setFormat] = useState<TournamentFormat>('single_round_robin');
   const [cooldownDuration, setCooldownDuration] = useState<CardCooldownDuration>(2);
   const [banDuplicateDecks, setBanDuplicateDecks] = useState(true);
-  const [matchFormatBo, setMatchFormatBo] = useState<MatchFormatBo>(3);
+  const [matchFormatBo] = useState<MatchFormatBo>(1);
   const [tiebreakerMode, setTiebreakerMode] = useState<TiebreakerMode>('bo5');
   const [selectedPlayerIds, setSelectedPlayerIds] = useState<number[]>(
     players.slice(0, 6).map((p) => p.id)
@@ -290,38 +290,13 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
               </div>
             </div>
 
-            {/* Match Series Format */}
             <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-sm">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-1">
-                Format des Séries (BO)
+                Format des Matchs
               </label>
-              <p className="text-[11px] text-slate-500 mb-3">
-                Le premier joueur à remporter la majorité des manches gagne le match et marque 3 points.
+              <p className="text-[11px] text-slate-500">
+                Chaque fixture se joue en un seul match. Une victoire rapporte 3 points.
               </p>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setMatchFormatBo(3)}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
-                    matchFormatBo === 3
-                      ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-sm'
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  Best of 3 (Bo3)
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMatchFormatBo(5)}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold border transition-all cursor-pointer text-center ${
-                    matchFormatBo === 5
-                      ? 'bg-amber-500 text-slate-950 border-amber-500 shadow-sm'
-                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
-                  }`}
-                >
-                  Best of 5 (Bo5)
-                </button>
-              </div>
             </div>
 
             {/* Tiebreaker Rule */}
@@ -470,8 +445,8 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
                 <span className="font-bold text-slate-900 capitalize">{format.replace(/_/g, ' ')}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Format de Série :</span>
-                <span className="font-bold text-slate-900">Best of {matchFormatBo}</span>
+                <span className="text-slate-500">Format de Match :</span>
+                <span className="font-bold text-slate-900">Match unique</span>
               </div>
             </div>
 

@@ -16,6 +16,11 @@ interface FixtureRow extends RowDataPacket {
   player2_name: string;
   player2_tag: string;
   player2_points: number;
+  game_id: number | null;
+  game_number: number | null;
+  game_winner_id: number | null;
+  p1_crowns: number | null;
+  p2_crowns: number | null;
 }
 
 interface TournamentRow extends RowDataPacket {
@@ -155,7 +160,12 @@ if (!tournament) return null;
       p2.player_tag AS player2_tag,
 
       COALESCE(tp1.points, 0) AS player1_points,
-      COALESCE(tp2.points, 0) AS player2_points
+      COALESCE(tp2.points, 0) AS player2_points,
+      mg.id AS game_id,
+      mg.game_number,
+      mg.winner_id AS game_winner_id,
+      mg.p1_crowns,
+      mg.p2_crowns
 
     FROM matches m
     JOIN players p1 ON p1.id = m.player1_id
@@ -168,6 +178,9 @@ if (!tournament) return null;
     LEFT JOIN tournament_players tp2
       ON tp2.tournament_id = m.tournament_id
       AND tp2.player_id = m.player2_id
+
+    LEFT JOIN match_games mg
+      ON mg.match_id = m.id AND mg.game_number = 1
 
     WHERE m.tournament_id = ?
     ORDER BY m.match_number ASC, m.id ASC
@@ -185,9 +198,8 @@ if (!tournament) return null;
 
   const enrichedFixtures = await Promise.all(
     fixtures.map(async (fixture) => {
-      const playerCards = fixture.status === "completed"
-        ? null
-        : await Promise.all([
+      const [playerCards, registeredDecks] = await Promise.all([
+        Promise.all([
           getPlayerCardAvailability(
             tournamentId,
             fixture.player1_id,
@@ -200,7 +212,15 @@ if (!tournament) return null;
             cooldownDuration,
             allCards,
           ),
-        ]);
+        ]),
+        fixture.game_id === null
+          ? Promise.resolve([] as Array<{ player_id: number; card_id: number }>)
+          : pool.execute<Array<RowDataPacket & { player_id: number; card_id: number }>>(
+            `SELECT player_id, card_id FROM card_cooldowns
+             WHERE match_game_id = ? ORDER BY player_id, card_id`,
+            [fixture.game_id],
+          ).then(([rows]) => rows),
+      ]);
 
       const player1 = {
         id: fixture.player1_id,
@@ -220,12 +240,23 @@ if (!tournament) return null;
         Object.assign(player2, playerCards[1]);
       }
 
+      const game = fixture.game_id === null ? null : {
+        id: fixture.game_id,
+        gameNumber: fixture.game_number,
+        winnerId: fixture.game_winner_id,
+        player1Crowns: fixture.p1_crowns,
+        player2Crowns: fixture.p2_crowns,
+        player1CardIds: registeredDecks.filter((deck) => deck.player_id === fixture.player1_id).map((deck) => deck.card_id),
+        player2CardIds: registeredDecks.filter((deck) => deck.player_id === fixture.player2_id).map((deck) => deck.card_id),
+      };
+
       return {
         matchId: fixture.match_id,
         matchNumber: fixture.match_number,
         nextGameNumber: fixture.next_game_number,
         status: fixture.status,
         isTiebreaker: Boolean(fixture.is_tiebreaker),
+        game,
 
         player1,
         player2,

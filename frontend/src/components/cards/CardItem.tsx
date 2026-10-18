@@ -47,14 +47,14 @@ export const CardItem: React.FC<CardItemProps> = ({
         sizeClasses[size]
       } ${
         isBanned
-          ? 'opacity-40 grayscale cursor-not-allowed bg-slate-900 border-slate-700/60'
+          ? 'cursor-not-allowed bg-slate-900 border-rose-300/80 ring-2 ring-rose-500/30'
           : isSelected
           ? 'ring-2 ring-amber-400 scale-[1.03] shadow-lg cursor-pointer'
           : 'hover:scale-[1.04] hover:shadow-md cursor-pointer'
       }`}
       style={{
-        backgroundColor: isBanned ? '#0f172a' : rarityStyle.bg,
-        borderColor: isBanned ? '#334155' : isSelected ? '#f59e0b' : rarityStyle.border,
+        backgroundColor: isBanned ? rarityStyle.bg : rarityStyle.bg,
+        borderColor: isBanned ? '#fda4af' : isSelected ? '#f59e0b' : rarityStyle.border,
         boxShadow: isSelected ? `0 0 15px ${rarityStyle.glow}` : undefined,
       }}
       title={`${card.name} (${card.rarity}, ${card.elixir_cost} Elixir)${isBanned ? ' - On Cooldown' : ''}`}
@@ -106,10 +106,10 @@ export const CardItem: React.FC<CardItemProps> = ({
 
         {/* Cooldown Lock Overlay */}
         {isBanned && (
-          <div className="absolute inset-0 bg-slate-950/70 rounded-lg flex flex-col items-center justify-center text-rose-400 font-bold">
-            <Lock className="w-4 h-4" />
+          <div className="absolute inset-0 bg-slate-950/55 rounded-lg flex flex-col items-center justify-center text-white font-bold">
+            <Lock className="w-5 h-5 drop-shadow-md" />
             {cooldownRemaining !== undefined && cooldownRemaining > 0 && (
-              <span className="text-[9px] mt-0.5 font-bold tracking-tight">{cooldownRemaining}M</span>
+              <span className="text-[9px] mt-0.5 font-bold tracking-tight bg-rose-600 px-1.5 py-0.5 rounded-full">{cooldownRemaining}M</span>
             )}
           </div>
         )}

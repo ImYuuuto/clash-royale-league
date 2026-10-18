@@ -11,9 +11,9 @@ function normalizeTournament(raw: any): Tournament {
     name: player.name,
     player_tag: player.playerTag ?? player.player_tag ?? player.tag ?? '',
     avatar_url: player.avatarUrl ?? player.avatar_url,
-    points: Number(player.points) || 0,
-    matches_played: Number(player.matchesPlayed ?? player.matches_played) || 0,
-    matches_won: Number(player.matchesWon ?? player.matches_won) || 0,
+        points: Number(player.points) || 0,
+        matches_played: Number(player.matchesPlayed ?? player.matches_played) || 0,
+        matches_won: Number(player.matchesWon ?? player.matches_won) || 0,
     crowns_for: Number(player.crownsFor ?? player.crowns_for) || 0,
     crowns_against: Number(player.crownsAgainst ?? player.crowns_against) || 0,
   })) : [];
@@ -26,7 +26,7 @@ function normalizeTournament(raw: any): Tournament {
     winner_name: raw.winnerName ?? raw.winner_name,
     cooldown_duration: raw.cooldownDuration ?? raw.cooldown_duration ?? 2,
     ban_duplicate_decks: raw.banDuplicateDecks ?? raw.ban_duplicate_decks ?? true,
-    match_format_bo: raw.matchFormatBo ?? raw.match_format_bo ?? 3,
+    match_format_bo: 1,
     tiebreaker_mode: raw.tiebreakerMode ?? raw.tiebreaker_mode ?? 'bo5',
     created_at: raw.createdAt ?? raw.created_at ?? new Date().toISOString(),
     players,
@@ -156,7 +156,7 @@ export const tournamentsApi = {
         points: Number(player.points) || 0,
         matches_played: Number(player.matches_played) || 0,
         matches_won: Number(player.matches_won) || 0,
-        matches_lost: (Number(player.matches_played) || 0) - (Number(player.matches_won) || 0),
+        matches_lost: Math.max(0, (Number(player.matches_played) || 0) - (Number(player.matches_won) || 0)),
         crowns_for: Number(player.crowns_for) || 0,
         crowns_against: Number(player.crowns_against) || 0,
         crown_diff: (Number(player.crowns_for) || 0) - (Number(player.crowns_against) || 0),
@@ -164,22 +164,15 @@ export const tournamentsApi = {
       });
     }
 
-    for (const fixture of fixtures) {
-      if (fixture.status !== 'completed' || fixture.isTiebreaker) continue;
-      const p1 = playerMap.get(fixture.player1.id);
-      const p2 = playerMap.get(fixture.player2.id);
-      if (!p1 || !p2) continue;
-      if (fixture.player1.points > fixture.player2.points) {
-        p1.form?.push('W');
-        p2.form?.push('L');
-      } else {
-        p1.form?.push('L');
-        p2.form?.push('W');
-      }
+    for (const entry of playerMap.values()) {
+      const player = tournament.players.find((candidate) => candidate.id === entry.player_id);
+      entry.crowns_for = Number(player?.crowns_for) || 0;
+      entry.crowns_against = Number(player?.crowns_against) || 0;
+      entry.crown_diff = entry.crowns_for - entry.crowns_against;
     }
 
     const standings = [...playerMap.values()].sort((a, b) =>
-      b.points - a.points || b.matches_won - a.matches_won || b.crown_diff - a.crown_diff,
+      b.points - a.points || b.matches_won - a.matches_won || b.crown_diff - a.crown_diff || a.player_name.localeCompare(b.player_name),
     );
     standings.forEach((entry, index) => {
       entry.rank = index + 1;

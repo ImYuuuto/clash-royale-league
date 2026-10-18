@@ -11,4 +11,14 @@ export const matchesApi = {
       data: body?.data ?? body,
     };
   },
+
+  async updateGame(matchId: number, gameId: number, payload: GameRegistrationPayload): Promise<GameRegistrationResponse> {
+    const response = await axiosInstance.patch(`/api/matches/${matchId}/games/${gameId}`, payload);
+    const body = response.data;
+    return {
+      success: body?.success ?? true,
+      message: body?.message ?? 'Game updated successfully.',
+      data: body?.data ?? body,
+    };
+  },
 };

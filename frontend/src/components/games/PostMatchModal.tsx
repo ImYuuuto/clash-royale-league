@@ -31,7 +31,8 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
   const [winnerId, setWinnerId] = useState<number | null>(null);
   const [p1Crowns, setP1Crowns] = useState<number>(2);
   const [p2Crowns, setP2Crowns] = useState<number>(1);
-  const [gameNumber, setGameNumber] = useState<number>(fixture.nextGameNumber || 1);
+  const gameNumber = fixture.nextGameNumber || 1;
+  const isEditing = Boolean(fixture.game);
 
   // 8 Cards for each player
   const [p1CardIds, setP1CardIds] = useState<number[]>([]);
@@ -66,12 +67,11 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
 
   useEffect(() => {
     if (!isOpen) return;
-    setGameNumber(fixture.nextGameNumber || 1);
-    setWinnerId(null);
-    setP1Crowns(2);
-    setP2Crowns(1);
-    setP1CardIds([]);
-    setP2CardIds([]);
+    setWinnerId(fixture.game?.winnerId ?? null);
+    setP1Crowns(fixture.game?.player1Crowns ?? 2);
+    setP2Crowns(fixture.game?.player2Crowns ?? 1);
+    setP1CardIds(fixture.game?.player1CardIds ?? []);
+    setP2CardIds(fixture.game?.player2CardIds ?? []);
     setValidationError('');
     setActivePlayerDeckTab('p1');
   }, [isOpen, fixture.matchId, fixture.nextGameNumber]);
@@ -81,7 +81,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
       setP1CardIds((prev) => prev.filter((id) => id !== card.id));
     } else {
       if (p1CardIds.length >= 8) return;
-      if (tournament.cooldown_duration > 0 && p1BannedIds.has(card.id)) {
+      if (!isEditing && tournament.cooldown_duration > 0 && p1BannedIds.has(card.id)) {
         showNotification('warning', 'Carte en Cooldown', `${card.name} est actuellement verrouillée pour ${fixture.player1.name}.`);
         return;
       }
@@ -94,7 +94,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
       setP2CardIds((prev) => prev.filter((id) => id !== card.id));
     } else {
       if (p2CardIds.length >= 8) return;
-      if (tournament.cooldown_duration > 0 && p2BannedIds.has(card.id)) {
+      if (!isEditing && tournament.cooldown_duration > 0 && p2BannedIds.has(card.id)) {
         showNotification('warning', 'Carte en Cooldown', `${card.name} est actuellement verrouillée pour ${fixture.player2.name}.`);
         return;
       }
@@ -147,10 +147,12 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
 
     setSubmitting(true);
     try {
-      const response = await matchesApi.registerGame(fixture.matchId, payload);
+      const response = fixture.game
+        ? await matchesApi.updateGame(fixture.matchId, fixture.game.id, { ...payload, gameNumber: fixture.game.gameNumber ?? gameNumber })
+        : await matchesApi.registerGame(fixture.matchId, payload);
 
       // Celebrate!
-      confetti({
+      if (!isEditing) confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
@@ -159,10 +161,12 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
 
       showNotification(
         'success',
-        'Résultat Validé !',
-        response.data?.fixtureCompleted
-          ? `La série de match #${fixture.matchNumber} est terminée avec succès !`
-          : `Set #${gameNumber} enregistré.`
+        isEditing ? 'Résultat Modifié' : 'Résultat Validé !',
+        isEditing
+          ? `Le résultat du match #${fixture.matchNumber} a été mis à jour.`
+          : response.data?.fixtureCompleted
+          ? `Le match #${fixture.matchNumber} est terminé.`
+          : `Match enregistré.`
       );
 
       onSuccess();
@@ -175,11 +179,11 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
   };
 
   return (
-    <Modal
+      <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`Enregistrer le Résultat : Match #${fixture.matchNumber}`}
-      description="Saisissez le vainqueur, les couronnes et les decks de 8 cartes pour la validation officielle."
+      title={`${isEditing ? 'Modifier' : 'Enregistrer'} le Résultat : Match #${fixture.matchNumber}`}
+      description={`${isEditing ? 'Corrigez' : 'Saisissez'} le vainqueur, les couronnes et les decks de 8 cartes.`}
       maxWidth="4xl"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -195,18 +199,11 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
 
         {/* Game Number and Winner Selector */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 border border-slate-200/90 p-4 rounded-2xl">
-          <div>
+          <div className="rounded-xl border border-slate-200 bg-white p-3">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-              Numéro de Set
+              Match de la fixture
             </label>
-            <input
-              type="number"
-              min={1}
-              max={tournament.match_format_bo}
-              value={gameNumber}
-              onChange={(e) => setGameNumber(Number(e.target.value))}
-              className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-sm text-slate-900 font-bold focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20"
-            />
+            <div className="text-sm font-bold text-[#0b2559]">Match unique</div>
           </div>
 
           <div className="md:col-span-2">

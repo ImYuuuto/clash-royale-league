@@ -3,7 +3,7 @@ import { BackendFixture } from '../../types/api';
 import { Tournament } from '../../types/tournament';
 import { Button } from '../ui/Button';
 import { CardItem } from '../cards/CardItem';
-import { Swords, Shield, Flame, Lock } from 'lucide-react';
+import { Swords, Shield, Flame, Lock, CalendarDays, PlayCircle, CheckCircle2 } from 'lucide-react';
 
 interface PreMatchBriefingProps {
   fixture: BackendFixture;
@@ -23,6 +23,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
   const cooldownEnabled = tournament.cooldown_duration > 0;
   const p1BannedCards = fixture.player1.bannedCards || [];
   const p2BannedCards = fixture.player2.bannedCards || [];
+  const statusLabel = fixture.status === 'completed' ? 'Match terminé' : fixture.status === 'in_progress' ? 'Série en cours' : 'Match à venir';
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-8 animate-fadeIn max-w-5xl mx-auto">
@@ -33,8 +34,12 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
             <span>Match #{String(fixture.matchNumber).padStart(2, '0')}</span>
             <span className="text-slate-300">•</span>
             <span className="text-slate-600 font-bold">
-              {fixture.isTiebreaker ? 'Mini-Finale Tiebreaker BO5' : `Best of ${tournament.match_format_bo}`}
+              {fixture.isTiebreaker ? 'Mini-Finale Tiebreaker BO5' : 'Match unique'}
             </span>
+          </div>
+          <div className={`inline-flex items-center gap-1.5 mt-2 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${fixture.status === 'completed' ? 'bg-slate-100 border-slate-200 text-slate-600' : fixture.status === 'in_progress' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
+            {fixture.status === 'completed' ? <CheckCircle2 className="w-3.5 h-3.5" /> : fixture.status === 'in_progress' ? <PlayCircle className="w-3.5 h-3.5" /> : <CalendarDays className="w-3.5 h-3.5" />}
+            {statusLabel}
           </div>
           <h2 className="text-2xl font-black font-display uppercase tracking-wide text-slate-900 mt-1">
             Briefing Tactique Pré-Match
@@ -45,7 +50,16 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
           <Button variant="outline" onClick={onBack}>
             Retour aux Matchs
           </Button>
-          {fixture.status !== 'completed' && (
+          {fixture.game && (
+            <Button
+              variant="gold"
+              onClick={() => onOpenRegister(fixture)}
+              icon={<Swords className="w-4 h-4" />}
+            >
+              Modifier le résultat
+            </Button>
+          )}
+          {!fixture.game && fixture.status !== 'completed' && (
             <Button
               variant="gold"
               onClick={() => onOpenRegister(fixture)}
@@ -139,7 +153,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-between flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-4 text-slate-700 font-semibold flex-wrap">
           <span className="flex items-center gap-1.5 font-bold text-slate-900">
-            <Shield className="w-4 h-4 text-amber-500" /> Format : Best of {tournament.match_format_bo}
+            <Shield className="w-4 h-4 text-amber-500" /> Format : Match unique
           </span>
           <span className="text-slate-300">•</span>
           <span>

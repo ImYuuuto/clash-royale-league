@@ -141,16 +141,70 @@ export async function createTournament(input: unknown) {
   const name = typeof body?.name === "string" ? body.name.trim() : "";
   if (!name || name.length > 100) throw new ManagementError("name is required and must be at most 100 characters");
   const cooldownDuration = body?.cooldownDuration === undefined ? 2 : Number(body.cooldownDuration);
-  const matchFormatBo = body?.matchFormatBo === undefined ? 3 : Number(body.matchFormatBo);
+  const matchFormatBo = body?.matchFormatBo === undefined ? 1 : Number(body.matchFormatBo);
   const banDuplicateDecks = body?.banDuplicateDecks === undefined ? true : body.banDuplicateDecks;
   if (!Number.isSafeInteger(cooldownDuration) || cooldownDuration < 0) throw new ManagementError("cooldownDuration must be a non-negative integer");
-  if (![3, 5].includes(matchFormatBo)) throw new ManagementError("matchFormatBo must be 3 or 5");
+  if (matchFormatBo !== 1) throw new ManagementError("Regular fixtures contain one game");
   if (typeof banDuplicateDecks !== "boolean") throw new ManagementError("banDuplicateDecks must be a boolean");
   const [result] = await pool.execute<ResultSetHeader>(
     `INSERT INTO tournaments (name, cooldown_duration, ban_duplicate_decks, match_format_bo)
      VALUES (?, ?, ?, ?)`, [name, cooldownDuration, banDuplicateDecks, matchFormatBo],
   );
   return { id: result.insertId, name, status: "draft", cooldownDuration, banDuplicateDecks, matchFormatBo };
+}
+
+export async function migrateKlawatTournamentToSingleGame() {
+  const [rows] = await pool.execute<RowDataPacket[]>(
+    "SELECT id FROM tournaments WHERE name = ? ORDER BY id DESC LIMIT 1",
+    ["17/10 KLAWAT"],
+  );
+  const tournament = rows[0] as (RowDataPacket & { id: number }) | undefined;
+  if (!tournament) return;
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    await connection.execute("UPDATE tournaments SET match_format_bo = 1 WHERE id = ?", [tournament.id]);
+    await connection.execute(
+      `UPDATE matches m
+       JOIN match_games mg ON mg.match_id = m.id AND mg.game_number = 1
+       SET m.winner_id = mg.winner_id, m.status = 'completed'
+       WHERE m.tournament_id = ? AND m.is_tiebreaker = FALSE`, [tournament.id],
+    );
+    await connection.execute(
+      `UPDATE matches m
+       SET m.winner_id = NULL,
+           m.status = IF(EXISTS (SELECT 1 FROM match_games mg WHERE mg.match_id = m.id), 'in_progress', 'scheduled')
+       WHERE m.tournament_id = ? AND m.is_tiebreaker = FALSE
+         AND NOT EXISTS (SELECT 1 FROM match_games mg WHERE mg.match_id = m.id AND mg.game_number = 1)`,
+      [tournament.id],
+    );
+    await connection.execute(
+      `UPDATE tournament_players tp
+       LEFT JOIN (
+         SELECT m.player1_id AS player_id, COUNT(*) AS played,
+                SUM(m.winner_id = m.player1_id) AS won
+         FROM matches m WHERE m.tournament_id = ? AND m.is_tiebreaker = FALSE AND m.status = 'completed'
+         GROUP BY m.player1_id
+       ) p1 ON p1.player_id = tp.player_id
+       LEFT JOIN (
+         SELECT m.player2_id AS player_id, COUNT(*) AS played,
+                SUM(m.winner_id = m.player2_id) AS won
+         FROM matches m WHERE m.tournament_id = ? AND m.is_tiebreaker = FALSE AND m.status = 'completed'
+         GROUP BY m.player2_id
+       ) p2 ON p2.player_id = tp.player_id
+       SET tp.matches_played = COALESCE(p1.played, 0) + COALESCE(p2.played, 0),
+           tp.matches_won = COALESCE(p1.won, 0) + COALESCE(p2.won, 0),
+           tp.points = 3 * (COALESCE(p1.won, 0) + COALESCE(p2.won, 0))
+       WHERE tp.tournament_id = ?`, [tournament.id, tournament.id, tournament.id],
+    );
+    await connection.commit();
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
 }
 
 export async function getTournament(idInput: unknown) {
@@ -228,10 +282,8 @@ export async function updateTournament(idInput: unknown, input: unknown) {
     if (!Number.isSafeInteger(value) || value < 0) throw new ManagementError("cooldownDuration must be a non-negative integer");
     assignments.push("cooldown_duration = ?"); values.push(value);
   }
-  if (body && Object.hasOwn(body, "matchFormatBo")) {
-    const value = Number(body.matchFormatBo);
-    if (![3, 5].includes(value)) throw new ManagementError("matchFormatBo must be 3 or 5");
-    assignments.push("match_format_bo = ?"); values.push(value);
+  if (body && Object.hasOwn(body, "matchFormatBo") && Number(body.matchFormatBo) !== 1) {
+    throw new ManagementError("Regular fixtures contain one game");
   }
   if (body && Object.hasOwn(body, "banDuplicateDecks")) {
     if (typeof body.banDuplicateDecks !== "boolean") throw new ManagementError("banDuplicateDecks must be a boolean");

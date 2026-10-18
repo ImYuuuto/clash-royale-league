@@ -64,7 +64,7 @@ export const MatchesPage: React.FC = () => {
         {/* Status Filters */}
         <div className="flex items-center gap-1.5 bg-white/10 border border-white/20 p-1.5 rounded-xl backdrop-blur-sm">
           <Filter className="w-3.5 h-3.5 text-white/50 ml-2 mr-1" />
-          {(['all', 'scheduled', 'completed'] as const).map((s) => (
+          {(['all', 'scheduled', 'in_progress', 'completed'] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
@@ -74,7 +74,7 @@ export const MatchesPage: React.FC = () => {
                   : 'text-white/70 hover:text-white'
               }`}
             >
-              {s === 'all' ? 'Tous' : s === 'scheduled' ? 'Programmés' : 'Terminés'}
+              {s === 'all' ? 'Tous' : s === 'scheduled' ? 'À venir' : s === 'in_progress' ? 'En cours' : 'Terminés'}
             </button>
           ))}
         </div>
@@ -84,6 +84,7 @@ export const MatchesPage: React.FC = () => {
       <div className="space-y-3">
         {filteredFixtures.map((fixture) => {
           const isCompleted = fixture.status === 'completed';
+          const isInProgress = fixture.status === 'in_progress';
 
           return (
             <div
@@ -104,13 +105,15 @@ export const MatchesPage: React.FC = () => {
                     className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
                       isCompleted
                         ? 'bg-slate-50 text-slate-500 border-slate-200'
-                        : 'bg-emerald-50 text-emerald-600 border-emerald-200'
+                        : isInProgress
+                        ? 'bg-amber-50 text-amber-700 border-amber-300'
+                        : 'bg-blue-50 text-blue-700 border-blue-200'
                     }`}
                   >
-                    {fixture.status === 'completed' ? 'Terminé' : 'Programmé'}
+                    {isCompleted ? 'Terminé' : isInProgress ? 'En cours' : 'À venir'}
                   </span>
                   <div className="text-[11px] text-slate-400 font-medium mt-1">
-                    {fixture.isTiebreaker ? 'Tiebreaker BO5' : `Série BO${activeTournament?.match_format_bo || 3}`}
+                    {fixture.isTiebreaker ? 'Tiebreaker BO5' : 'Match unique'}
                   </div>
                 </div>
               </div>
@@ -155,7 +158,7 @@ export const MatchesPage: React.FC = () => {
                   }}
                   icon={isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Swords className="w-3.5 h-3.5" />}
                 >
-                  {isCompleted ? 'Inspecter' : 'Enregistrer'}
+                  {isCompleted ? 'Inspecter' : isInProgress ? 'Continuer' : 'Enregistrer'}
                 </Button>
                 <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors" />
               </div>

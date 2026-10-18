@@ -321,9 +321,9 @@ export async function registerGame(matchId: number, input: RegisterGameInput) {
       );
     }
 
-    const gamesToWin = match.is_tiebreaker
-      ? 3
-      : Math.ceil(match.match_format_bo / 2);
+    // Regular fixtures are one registered game. Championship tie-breakers
+    // remain a Bo5 series.
+    const gamesToWin = match.is_tiebreaker ? 3 : 1;
 
     const player1WinsBefore = previousGames.filter(
       (game) => game.winner_id === match.player1_id,
@@ -557,6 +557,154 @@ export async function registerGame(matchId: number, input: RegisterGameInput) {
     if (transactionStarted) {
       await connection.rollback();
     }
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+export async function updateGame(matchId: number, gameId: number, input: RegisterGameInput) {
+  if (!Number.isSafeInteger(matchId) || matchId <= 0 || !Number.isSafeInteger(gameId) || gameId <= 0) {
+    throw new GameRegistrationError("Invalid fixture or game ID");
+  }
+  if (!input || !Number.isSafeInteger(input.winnerId) || input.winnerId <= 0) {
+    throw new GameRegistrationError("winnerId must be a positive integer");
+  }
+  validatePlayerSubmission(input.player1, "player1");
+  validatePlayerSubmission(input.player2, "player2");
+  const deckSubmissions = [input.player1.cardIds, input.player2.cardIds];
+  const hashes = deckSubmissions.map(createDeckHash);
+
+  const connection = await pool.getConnection();
+  let transactionStarted = false;
+  try {
+    await connection.beginTransaction();
+    transactionStarted = true;
+    const [matches] = await connection.execute<MatchRow[]>(
+      `SELECT m.id, m.tournament_id, m.match_number, m.player1_id, m.player2_id,
+              m.status, m.is_tiebreaker, t.status AS tournament_status,
+              t.cooldown_duration, t.ban_duplicate_decks, t.match_format_bo, t.tiebreaker_mode
+       FROM matches m JOIN tournaments t ON t.id = m.tournament_id
+       WHERE m.id = ? FOR UPDATE`, [matchId],
+    );
+    const match = matches[0];
+    if (!match) throw new GameRegistrationError("Fixture not found", 404);
+    const [gameRows] = await connection.execute<Array<GameRow & { game_number: number }>>(
+      "SELECT id, winner_id, game_number FROM match_games WHERE id = ? AND match_id = ? FOR UPDATE",
+      [gameId, matchId],
+    );
+    const game = gameRows[0];
+    if (!game) throw new GameRegistrationError("Registered game not found", 404);
+    if (input.gameNumber !== game.game_number) throw new GameRegistrationError("The game number cannot be changed", 409);
+    if (input.winnerId !== match.player1_id && input.winnerId !== match.player2_id) {
+      throw new GameRegistrationError("winnerId must match one of the fixture's players");
+    }
+    await validateCardsExist(connection, [...input.player1.cardIds, ...input.player2.cardIds]);
+
+    const playerIds = [match.player1_id, match.player2_id];
+    const [duplicateRows] = await connection.execute<Array<CountRow & { player_id: number }>>(
+      `SELECT player_id, COUNT(*) AS total FROM player_decks
+       WHERE tournament_id = ? AND player_id IN (?, ?) AND deck_hash IN (?, ?)
+         AND match_game_id <> ? GROUP BY player_id, deck_hash`,
+      [match.tournament_id, ...playerIds, ...hashes, gameId],
+    );
+    if (match.ban_duplicate_decks && duplicateRows.length) {
+      throw new GameRegistrationError("This deck has already been used in the tournament", 409);
+    }
+
+    const [otherGames] = await connection.execute<Array<RowDataPacket & { id: number }>>(
+      `SELECT mg.id FROM match_games mg JOIN matches m ON m.id = mg.match_id
+       WHERE m.tournament_id = ? AND mg.id <> ? AND m.match_number >= ?`,
+      [match.tournament_id, gameId, match.match_number],
+    );
+    if (otherGames.length) {
+      const [cooldownOverlap] = await connection.execute<CountRow[]>(
+        `SELECT COUNT(*) AS total FROM card_cooldowns cc
+         WHERE cc.tournament_id = ? AND cc.match_game_id IN (${otherGames.map(() => "?").join(",")})
+           AND ((cc.player_id = ? AND cc.card_id IN (${input.player1.cardIds.map(() => "?").join(",")}))
+             OR (cc.player_id = ? AND cc.card_id IN (${input.player2.cardIds.map(() => "?").join(",")})))`,
+        [match.tournament_id, ...otherGames.map((row) => row.id), match.player1_id, ...input.player1.cardIds, match.player2_id, ...input.player2.cardIds],
+      );
+      if (Number(cooldownOverlap[0]?.total ?? 0)) {
+        throw new GameRegistrationError("The updated decks conflict with cooldowns in later registered games", 409);
+      }
+    }
+
+    await connection.execute("DELETE FROM card_cooldowns WHERE match_game_id = ?", [gameId]);
+    await connection.execute("DELETE FROM player_decks WHERE match_game_id = ?", [gameId]);
+    for (let index = 0; index < 2; index += 1) {
+      await registerDeck(connection, {
+        tournamentId: match.tournament_id,
+        playerId: playerIds[index]!,
+        matchGameId: gameId,
+        matchNumber: match.match_number,
+        cooldownDuration: match.cooldown_duration,
+        cardIds: deckSubmissions[index]!,
+        deckHash: hashes[index]!,
+      });
+    }
+    await connection.execute(
+      `UPDATE match_games SET winner_id = ?, p1_crowns = ?, p2_crowns = ? WHERE id = ?`,
+      [input.winnerId, input.player1.crowns, input.player2.crowns, gameId],
+    );
+
+    if (match.is_tiebreaker) {
+      const [gameResults] = await connection.execute<Array<GameRow & { game_number: number }>>(
+        "SELECT id, winner_id, game_number FROM match_games WHERE match_id = ? ORDER BY game_number",
+        [matchId],
+      );
+      const p1Wins = gameResults.filter((result) => result.winner_id === match.player1_id).length;
+      const p2Wins = gameResults.filter((result) => result.winner_id === match.player2_id).length;
+      const tieWinner = p1Wins >= 3 ? match.player1_id : p2Wins >= 3 ? match.player2_id : null;
+      await connection.execute(
+        "UPDATE matches SET winner_id = ?, status = ? WHERE id = ?",
+        [tieWinner, tieWinner ? "completed" : "in_progress", matchId],
+      );
+      if (tieWinner) {
+        await connection.execute("UPDATE tournaments SET winner_player_id = ? WHERE id = ?", [tieWinner, match.tournament_id]);
+      } else {
+        await connection.execute("UPDATE tournaments SET winner_player_id = NULL WHERE id = ?", [match.tournament_id]);
+      }
+    } else {
+      await connection.execute(
+        "UPDATE matches SET winner_id = ?, status = 'completed' WHERE id = ?",
+        [input.winnerId, matchId],
+      );
+    }
+
+    // Recompute the tournament totals from the preserved game and fixture rows.
+    await connection.execute(
+      `UPDATE tournament_players tp
+       LEFT JOIN (
+         SELECT m.player1_id AS player_id, COUNT(*) AS played,
+                SUM(m.winner_id = m.player1_id) AS won,
+                SUM((SELECT COALESCE(SUM(all_games.p1_crowns), 0) FROM match_games all_games WHERE all_games.match_id = m.id)) AS crowns_for,
+                SUM((SELECT COALESCE(SUM(all_games.p2_crowns), 0) FROM match_games all_games WHERE all_games.match_id = m.id)) AS crowns_against
+         FROM matches m JOIN match_games mg ON mg.match_id = m.id AND mg.game_number = 1
+         WHERE m.tournament_id = ? AND m.is_tiebreaker = FALSE AND m.status = 'completed'
+         GROUP BY m.player1_id
+       ) p1 ON p1.player_id = tp.player_id
+       LEFT JOIN (
+         SELECT m.player2_id AS player_id, COUNT(*) AS played,
+                SUM(m.winner_id = m.player2_id) AS won,
+                SUM((SELECT COALESCE(SUM(all_games.p2_crowns), 0) FROM match_games all_games WHERE all_games.match_id = m.id)) AS crowns_for,
+                SUM((SELECT COALESCE(SUM(all_games.p1_crowns), 0) FROM match_games all_games WHERE all_games.match_id = m.id)) AS crowns_against
+         FROM matches m JOIN match_games mg ON mg.match_id = m.id AND mg.game_number = 1
+         WHERE m.tournament_id = ? AND m.is_tiebreaker = FALSE AND m.status = 'completed'
+         GROUP BY m.player2_id
+       ) p2 ON p2.player_id = tp.player_id
+       SET tp.matches_played = COALESCE(p1.played, 0) + COALESCE(p2.played, 0),
+           tp.matches_won = COALESCE(p1.won, 0) + COALESCE(p2.won, 0),
+           tp.points = 3 * (COALESCE(p1.won, 0) + COALESCE(p2.won, 0)),
+           tp.crowns_for = COALESCE(p1.crowns_for, 0) + COALESCE(p2.crowns_for, 0),
+           tp.crowns_against = COALESCE(p1.crowns_against, 0) + COALESCE(p2.crowns_against, 0)
+       WHERE tp.tournament_id = ?`, [match.tournament_id, match.tournament_id, match.tournament_id],
+    );
+    await connection.commit();
+    transactionStarted = false;
+    return { matchGameId: gameId, matchId, gameNumber: game.game_number, gameWinnerId: input.winnerId };
+  } catch (error) {
+    if (transactionStarted) await connection.rollback();
     throw error;
   } finally {
     connection.release();

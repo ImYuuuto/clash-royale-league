@@ -16,7 +16,7 @@ CREATE TABLE tournaments (
     -- Dynamic Rules Configuration Columns
     cooldown_duration INT DEFAULT 2,          -- Number of matches a card stays banned (0 = disabled)
     ban_duplicate_decks BOOLEAN DEFAULT TRUE, -- Prevent playing the exact same 8-card deck twice
-    match_format_bo INT DEFAULT 3,            -- 3 for Bo3, 5 for Bo5 standard fixtures
+    match_format_bo INT DEFAULT 1,            -- Regular fixtures contain one game
     tiebreaker_mode VARCHAR(30) DEFAULT 'bo5', -- 'bo5', 'head_to_head', etc.
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (winner_player_id) REFERENCES players(id)

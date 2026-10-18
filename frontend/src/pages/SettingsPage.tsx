@@ -22,7 +22,6 @@ export const SettingsPage: React.FC = () => {
     setClearing(true);
     localStorage.removeItem('crl_global_roster');
     localStorage.removeItem('crl_tournaments');
-    localStorage.removeItem('crl_match_games');
     showNotification('success', 'Cache Vidé', 'Le cache local a été réinitialisé.');
     setTimeout(() => {
       window.location.reload();
@@ -79,7 +78,7 @@ export const SettingsPage: React.FC = () => {
             <div className="flex justify-between items-center py-1 border-b border-slate-50">
               <span className="text-slate-500">Format de Match :</span>
               <span className="font-bold text-[#0b2559]">
-                {activeTournament ? `Best of ${activeTournament.match_format_bo}` : 'BO3'}
+                Match unique
               </span>
             </div>
             <div className="flex justify-between items-center py-1 border-b border-slate-50">

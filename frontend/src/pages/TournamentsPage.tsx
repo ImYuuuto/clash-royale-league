@@ -116,7 +116,7 @@ export const TournamentsPage: React.FC = () => {
                   <div className="flex flex-wrap gap-2 mt-4">
                     <div className="text-[11px] font-medium bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl text-slate-600 flex items-center gap-1.5">
                       <Shield className="w-3.5 h-3.5 text-[#0b2559]" />
-                      <span>Best of {t.match_format_bo}</span>
+                      <span>Match unique</span>
                     </div>
 
                     <div className="text-[11px] font-medium bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl text-slate-600 flex items-center gap-1.5">
