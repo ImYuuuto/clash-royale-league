@@ -34,7 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
       title: 'PRINCIPAL',
       items: [
         { id: 'overview' as NavItem, label: 'Dashboard', icon: LayoutDashboard },
-        { id: 'players' as NavItem, label: 'Joueurs & Roster', icon: Users },
+        { id: 'players' as NavItem, label: 'Players', icon: Users },
       ],
     },
     {

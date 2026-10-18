@@ -16,6 +16,7 @@ interface TournamentContextType {
   refreshAll: () => Promise<void>;
   refreshFixtures: () => Promise<void>;
   createTournament: (input: CreateTournamentInput) => Promise<Tournament>;
+  deleteTournament: (id: number) => Promise<void>;
 }
 
 const TournamentContext = createContext<TournamentContextType | undefined>(undefined);
@@ -135,6 +136,16 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     return created;
   };
 
+  const deleteTournament = async (id: number): Promise<void> => {
+    await tournamentsApi.delete(id);
+    const remaining = await tournamentsApi.getAll();
+    setTournaments(remaining);
+    if (activeTournamentId === id) {
+      setActiveTournamentIdState(remaining[0]?.id ?? null);
+      setFixtures([]);
+    }
+  };
+
   const setActiveTournamentId = (id: number) => {
     setActiveTournamentIdState(id);
   };
@@ -153,6 +164,7 @@ export const TournamentProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         refreshAll,
         refreshFixtures,
         createTournament,
+        deleteTournament,
       }}
     >
       {children}

@@ -138,13 +138,14 @@ async function validateCardsExist(
   connection: PoolConnection,
   cardIds: number[],
 ): Promise<void> {
-  const placeholders = cardIds.map(() => "?").join(", ");
+  const uniqueCardIds = [...new Set(cardIds)];
+  const placeholders = uniqueCardIds.map(() => "?").join(", ");
   const [cards] = await connection.execute<IdRow[]>(
     `SELECT id FROM cards WHERE id IN (${placeholders})`,
-    cardIds,
+    uniqueCardIds,
   );
 
-  if (cards.length !== cardIds.length) {
+  if (cards.length !== uniqueCardIds.length) {
     throw new GameRegistrationError(
       "One or more submitted card IDs do not exist",
     );

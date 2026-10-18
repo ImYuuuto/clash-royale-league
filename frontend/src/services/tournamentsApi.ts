@@ -106,6 +106,11 @@ export const tournamentsApi = {
     return tournament;
   },
 
+  async delete(id: number): Promise<void> {
+    await axiosInstance.delete(`/api/tournaments/${id}`);
+    cacheTournaments(getCachedTournaments().filter((tournament) => tournament.id !== id));
+  },
+
   async addPlayers(tournamentId: number, playerIds: number[]): Promise<void> {
     await axiosInstance.post(`/api/tournaments/${tournamentId}/players`, { playerIds });
   },

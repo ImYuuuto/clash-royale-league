@@ -32,6 +32,7 @@ export const CardItem: React.FC<CardItemProps> = ({
   showElixir = true,
 }) => {
   const rarityStyle = RARITY_COLORS[card.rarity] || RARITY_COLORS.Common;
+  const [imageFailed, setImageFailed] = React.useState(false);
 
   const sizeClasses = {
     sm: 'w-16 h-22 text-[10px]',
@@ -82,15 +83,13 @@ export const CardItem: React.FC<CardItemProps> = ({
 
       {/* Center: Card Illustration / Avatar */}
       <div className="flex-1 flex items-center justify-center relative my-1">
-        {card.icon_url ? (
+        {card.icon_url && !imageFailed ? (
           <img
             src={card.icon_url}
             alt={card.name}
             className="w-full h-full object-contain drop-shadow-md"
             loading="lazy"
-            onError={(event) => {
-              event.currentTarget.style.display = 'none';
-            }}
+            onError={() => setImageFailed(true)}
           />
         ) : (
           <div

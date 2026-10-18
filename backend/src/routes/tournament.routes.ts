@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   getTournamentById,
   getTournaments,
+  deleteTournamentController,
   deleteTournamentPlayer,
   patchTournament,
   postGenerateFixtures,
@@ -19,6 +20,7 @@ const router = Router();
 router.get("/", getTournaments);
 router.post("/", postTournament);
 router.get("/:id", getTournamentById);
+router.delete("/:id", deleteTournamentController);
 router.patch("/:id", patchTournament);
 router.post("/:id/tiebreaker", postTiebreaker);
 router.post("/:id/players", postTournamentPlayers);

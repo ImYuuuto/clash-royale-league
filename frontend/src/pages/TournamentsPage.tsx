@@ -4,7 +4,8 @@ import { playersApi } from '../services/playersApi';
 import { Player } from '../types/player';
 import { TournamentWizard } from '../components/tournaments/TournamentWizard';
 import { Button } from '../components/ui/Button';
-import { Trophy, Plus, Shield, Users, Flame, Ban, ChevronRight } from 'lucide-react';
+import { Trophy, Plus, Shield, Users, Flame, Ban, ChevronRight, Trash2 } from 'lucide-react';
+import { useNotifications } from '../context/NotificationContext';
 
 export const TournamentsPage: React.FC = () => {
   const {
@@ -12,9 +13,12 @@ export const TournamentsPage: React.FC = () => {
     activeTournament,
     setActiveTournamentId,
     createTournament,
+    deleteTournament,
   } = useTournament();
+  const { showNotification } = useNotifications();
 
   const [wizardOpen, setWizardOpen] = useState(false);
+  const [deletingTournamentId, setDeletingTournamentId] = useState<number | null>(null);
   const [allPlayers, setAllPlayers] = useState<Player[]>([]);
 
   useEffect(() => {
@@ -141,9 +145,33 @@ export const TournamentsPage: React.FC = () => {
                   <span className="text-[11px] text-slate-400">
                     Créé le : {new Date(t.created_at).toLocaleDateString('fr-FR')}
                   </span>
-                  <div className="flex items-center gap-1 text-xs font-semibold text-[#0b2559] hover:text-blue-700">
-                    <span>{isActive ? 'Actuellement Active' : 'Activer la Ligue'}</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      disabled={deletingTournamentId === t.id}
+                      onClick={async (event) => {
+                        event.stopPropagation();
+                        if (!window.confirm(`Supprimer le tournoi « ${t.name} » et tous ses matchs et résultats ? Cette action est irréversible.`)) return;
+                        setDeletingTournamentId(t.id);
+                        try {
+                          await deleteTournament(t.id);
+                          showNotification('success', 'Tournoi supprimé', `${t.name} a été supprimé.`);
+                        } catch (error) {
+                          showNotification('error', 'Suppression impossible', error instanceof Error ? error.message : 'Une erreur est survenue.');
+                        } finally {
+                          setDeletingTournamentId(null);
+                        }
+                      }}
+                      className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 hover:text-rose-800 disabled:opacity-50"
+                      aria-label={`Supprimer le tournoi ${t.name}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      {deletingTournamentId === t.id ? 'Suppression…' : 'Supprimer'}
+                    </button>
+                    <div className="flex items-center gap-1 text-xs font-semibold text-[#0b2559] hover:text-blue-700">
+                      <span>{isActive ? 'Actuellement Active' : 'Activer la Ligue'}</span>
+                      <ChevronRight className="w-3.5 h-3.5" />
+                    </div>
                   </div>
                 </div>
               </div>

@@ -4,6 +4,7 @@ import {
   createPlayer,
   createTournament,
   createTiebreakerFixture,
+  deleteTournament,
   deletePlayer,
   generateRoundRobinFixtures,
   getPlayer,
@@ -48,6 +49,7 @@ export const patchPlayer = respond((req) => updatePlayer(req.params.id, req.body
 export const deletePlayerController = respond((req) => deletePlayer(req.params.id));
 export const getTournaments = respond(() => listTournaments());
 export const postTournament = respond((req) => createTournament(req.body), 201);
+export const deleteTournamentController = respond((req) => deleteTournament(req.params.id));
 export const getTournamentById = respond(async (req, res) => {
   const tournament = await getTournament(req.params.id);
   if (!tournament) {

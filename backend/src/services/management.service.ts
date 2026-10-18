@@ -171,6 +171,38 @@ export async function getTournament(idInput: unknown) {
   return { ...rows[0], players };
 }
 
+export async function deleteTournament(idInput: unknown) {
+  const id = positiveId(idInput, "tournament ID");
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+    const [tournaments] = await connection.execute<RowDataPacket[]>(
+      "SELECT id FROM tournaments WHERE id = ? FOR UPDATE",
+      [id],
+    );
+    if (!tournaments[0]) throw new ManagementError("Tournament not found", 404);
+
+    await connection.execute("DELETE FROM card_cooldowns WHERE tournament_id = ?", [id]);
+    await connection.execute("DELETE FROM player_decks WHERE tournament_id = ?", [id]);
+    await connection.execute(
+      `DELETE mg FROM match_games mg
+       INNER JOIN matches m ON m.id = mg.match_id
+       WHERE m.tournament_id = ?`,
+      [id],
+    );
+    await connection.execute("DELETE FROM matches WHERE tournament_id = ?", [id]);
+    await connection.execute("DELETE FROM tournament_players WHERE tournament_id = ?", [id]);
+    await connection.execute("DELETE FROM tournaments WHERE id = ?", [id]);
+    await connection.commit();
+    return { id, deleted: true };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 export async function updateTournament(idInput: unknown, input: unknown) {
   const id = positiveId(idInput, "tournament ID");
   const body = input as Record<string, unknown> | null;
@@ -372,23 +404,36 @@ export async function generateRoundRobinFixtures(tournamentIdInput: unknown) {
       "SELECT player_id FROM tournament_players WHERE tournament_id = ? ORDER BY player_id", [tournamentId],
     );
     if (players.length < 2) throw new ManagementError("Add at least two players before generating fixtures", 409);
-    let matchNumber = 1;
-    const fixtures: Array<{ matchNumber: number; player1Id: number; player2Id: number }> = [];
-    for (let i = 0; i < players.length; i += 1) {
-      for (let j = i + 1; j < players.length; j += 1) {
-        const player1Id = players[i]?.player_id;
-        const player2Id = players[j]?.player_id;
-        if (player1Id === undefined || player2Id === undefined) continue;
+    // Circle-method round robin: one match per player in each matchday.
+    // A null slot is a bye for odd participant counts and rotates fairly.
+    const rotation: Array<number | null> = players.map((player) => Number(player.player_id));
+    if (rotation.length % 2 === 1) rotation.push(null);
+
+    const fixtures: Array<{ matchNumber: number; round: number; player1Id: number; player2Id: number }> = [];
+    const roundCount = rotation.length - 1;
+    const matchesPerRound = rotation.length / 2;
+
+    for (let round = 1; round <= roundCount; round += 1) {
+      for (let pair = 0; pair < matchesPerRound; pair += 1) {
+        const first = rotation[pair];
+        const second = rotation[rotation.length - 1 - pair];
+        if (first === null || first === undefined || second === null || second === undefined) continue;
+
+        const matchNumber = fixtures.length + 1;
         await connection.execute(
           "INSERT INTO matches (tournament_id, match_number, player1_id, player2_id) VALUES (?, ?, ?, ?)",
-          [tournamentId, matchNumber, player1Id, player2Id],
+          [tournamentId, matchNumber, first, second],
         );
-        fixtures.push({ matchNumber, player1Id, player2Id });
-        matchNumber += 1;
+        fixtures.push({ matchNumber, round, player1Id: first, player2Id: second });
       }
+
+      const fixedPlayer = rotation[0];
+      const rotatingPlayers = rotation.slice(1);
+      rotatingPlayers.unshift(rotatingPlayers.pop() as number | null);
+      rotation.splice(0, rotation.length, fixedPlayer as number, ...rotatingPlayers);
     }
     await connection.commit();
-    return { tournamentId, fixtureCount: fixtures.length, fixtures };
+    return { tournamentId, fixtureCount: fixtures.length, roundCount, fixtures };
   } catch (error) {
     await connection.rollback();
     throw error;
