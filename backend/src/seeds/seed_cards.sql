@@ -1,7 +1,7 @@
 -- Disable foreign key checks during batch insert
 SET FOREIGN_KEY_CHECKS = 0;
 TRUNCATE TABLE cards;
-SET FOREIGN_KEY_CHECKS = 1;
+SET FOREIGN_KEY_CHECKS = 1; 
 
 -- ========================================================
 -- COMMONS

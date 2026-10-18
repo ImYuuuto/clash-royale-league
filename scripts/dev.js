@@ -9,12 +9,30 @@ const frontendCli = path.join(frontendDir, "node_modules", "vite-plus", "bin", "
 const electronBinary = require("electron");
 const children = [];
 let shuttingDown = false;
+let currentFrontendPort = 5173;
 
 function stopAll() {
   if (shuttingDown) return;
   shuttingDown = true;
   for (const child of children) {
-    if (child.exitCode === null) child.kill();
+    if (child.pid) {
+      try {
+        if (process.platform !== "win32") {
+          process.kill(-child.pid, "SIGKILL");
+        }
+      } catch {}
+      try {
+        child.kill("SIGKILL");
+      } catch {}
+    }
+  }
+  if (process.platform !== "win32") {
+    try {
+      const { execSync } = require("node:child_process");
+      execSync(`fuser -k ${currentFrontendPort}/tcp 3000/tcp 2>/dev/null || true`);
+      execSync(`pkill -9 -f "clash-royale-league/frontend" 2>/dev/null || true`);
+      execSync(`pkill -9 -f "clash-royale-league/backend" 2>/dev/null || true`);
+    } catch {}
   }
 }
 
@@ -52,6 +70,7 @@ async function waitForServer(url, child, timeoutMs = 30000) {
 
 async function start() {
   const port = await findAvailablePort();
+  currentFrontendPort = port;
   const devServerUrl = `http://127.0.0.1:${port}`;
   const electronEnv = {
     ...process.env,
@@ -65,6 +84,7 @@ async function start() {
       cwd: path.join(root, "backend"),
       stdio: "inherit",
       shell: true,
+      detached: process.platform !== "win32",
     });
     children.push(backend);
     backend.once("error", (error) => {
@@ -82,6 +102,7 @@ async function start() {
   const frontend = spawn(process.execPath, [frontendCli, "dev", "--host", "127.0.0.1", "--port", String(port), "--strictPort"], {
     cwd: frontendDir,
     stdio: "inherit",
+    detached: process.platform !== "win32",
   });
   children.push(frontend);
   frontend.once("error", (error) => {
@@ -110,8 +131,15 @@ async function start() {
     stopAll();
   });
   electron.once("exit", (code) => {
-    if (code) console.error(`Electron exited with code ${code}.`);
     stopAll();
+    setTimeout(() => {
+      for (const child of children) {
+        try {
+          if (child.exitCode === null) child.kill("SIGKILL");
+        } catch { }
+      }
+      process.exit(code || 0);
+    }, 200);
   });
 }
 
