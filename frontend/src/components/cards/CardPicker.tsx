@@ -13,16 +13,16 @@ interface CardPickerProps {
 }
 
 const RARITY_MAP: { [key: string]: string } = {
-  Toutes: 'All',
-  Commune: 'Common',
+  All: 'All',
+  Common: 'Common',
   Rare: 'Rare',
-  Épique: 'Epic',
-  Légendaire: 'Legendary',
+  Epic: 'Epic',
+  Legendary: 'Legendary',
   Champion: 'Champion',
 };
 
-const RARITY_LABELS = ['Toutes', 'Commune', 'Rare', 'Épique', 'Légendaire', 'Champion'];
-const ELIXIRS: (number | 'Tous')[] = ['Tous', 1, 2, 3, 4, 5, 6, 7, 8, 9];
+const RARITY_LABELS = ['All', 'Common', 'Rare', 'Epic', 'Legendary', 'Champion'];
+const ELIXIRS: (number | 'All')[] = ['All', 1, 2, 3, 4, 5, 6, 7, 8, 9];
 
 export const CardPicker: React.FC<CardPickerProps> = ({
   cards,
@@ -33,8 +33,8 @@ export const CardPicker: React.FC<CardPickerProps> = ({
   maxSelection = 8,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRarityLabel, setSelectedRarityLabel] = useState<string>('Toutes');
-  const [selectedElixir, setSelectedElixir] = useState<number | 'Tous'>('Tous');
+  const [selectedRarityLabel, setSelectedRarityLabel] = useState<string>('All');
+  const [selectedElixir, setSelectedElixir] = useState<number | 'All'>('All');
 
   const filteredCards = useMemo(() => {
     const targetRarity = RARITY_MAP[selectedRarityLabel] || 'All';
@@ -44,7 +44,7 @@ export const CardPicker: React.FC<CardPickerProps> = ({
       // Rarity filter
       const matchesRarity = targetRarity === 'All' || card.rarity === targetRarity;
       // Elixir filter
-      const matchesElixir = selectedElixir === 'Tous' || card.elixir_cost === selectedElixir;
+      const matchesElixir = selectedElixir === 'All' || card.elixir_cost === selectedElixir;
 
       return matchesSearch && matchesRarity && matchesElixir;
     });
@@ -61,7 +61,7 @@ export const CardPicker: React.FC<CardPickerProps> = ({
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher une carte Clash Royale..."
+            placeholder="Search Clash Royale cards..."
             className="w-full bg-white border border-slate-200 rounded-xl pl-9 pr-4 py-2 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-semibold"
           />
         </div>
@@ -89,7 +89,7 @@ export const CardPicker: React.FC<CardPickerProps> = ({
       <div className="flex items-center gap-1.5 overflow-x-auto border-t border-slate-200/80 pt-3">
         <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 flex items-center gap-1 mr-2">
           <Droplets className="w-3 h-3 fill-purple-600" />
-          Élixir :
+          Elixir:
         </span>
         {ELIXIRS.map((cost) => (
           <button
@@ -132,7 +132,7 @@ export const CardPicker: React.FC<CardPickerProps> = ({
         })}
         {filteredCards.length === 0 && (
           <div className="col-span-full py-10 text-center text-slate-400 text-xs font-medium">
-            Aucune carte trouvée correspondant à vos critères de recherche.
+            No cards match your search filters.
           </div>
         )}
       </div>

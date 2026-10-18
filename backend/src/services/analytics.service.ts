@@ -24,7 +24,7 @@ export async function getTournamentAnalytics(tournamentIdInput: unknown) {
   await ensureTournament(tournamentId);
 
   const [standings] = await pool.execute<RowDataPacket[]>(
-    `SELECT p.id AS playerId, p.name, p.player_tag AS playerTag,
+    `SELECT p.id AS playerId, p.name, p.player_tag AS playerTag, p.avatar_url AS avatarUrl,
             tp.points, tp.matches_played AS matchesPlayed, tp.matches_won AS matchesWon,
             CASE WHEN tp.matches_played = 0 THEN 0 ELSE ROUND(tp.matches_won / tp.matches_played, 4) END AS matchWinRate,
             tp.crowns_for AS crownsFor, tp.crowns_against AS crownsAgainst,
@@ -40,7 +40,7 @@ export async function getTournamentAnalytics(tournamentIdInput: unknown) {
   );
 
   const [cardStats] = await pool.execute<RowDataPacket[]>(
-    `SELECT c.id AS cardId, c.name, c.rarity, c.elixir_cost AS elixirCost,
+    `SELECT c.id AS cardId, c.name, c.rarity, c.elixir_cost AS elixirCost, c.icon_url AS iconUrl,
             COUNT(*) AS uses,
             SUM(mg.winner_id = pd.player_id) AS gameWins,
             CASE WHEN COUNT(*) = 0 THEN 0 ELSE ROUND(SUM(mg.winner_id = pd.player_id) / COUNT(*), 4) END AS winRate
@@ -49,7 +49,7 @@ export async function getTournamentAnalytics(tournamentIdInput: unknown) {
      JOIN player_decks pd ON pd.match_game_id = cc.match_game_id AND pd.player_id = cc.player_id AND pd.tournament_id = cc.tournament_id
      JOIN match_games mg ON mg.id = cc.match_game_id
      WHERE cc.tournament_id = ?
-     GROUP BY c.id, c.name, c.rarity, c.elixir_cost
+     GROUP BY c.id, c.name, c.rarity, c.elixir_cost, c.icon_url
      ORDER BY uses DESC, c.name`,
     [tournamentId],
   );

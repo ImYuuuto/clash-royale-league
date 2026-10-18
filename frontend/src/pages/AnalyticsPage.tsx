@@ -3,6 +3,7 @@ import { useTournament } from '../context/TournamentContext';
 import { analyticsApi } from '../services/analyticsApi';
 import { CardItem } from '../components/cards/CardItem';
 import type { Card } from '../types/api';
+import { PlayerAvatar } from '../components/players/PlayerAvatar';
 import {
   BarChart3,
   TrendingUp,
@@ -41,20 +42,20 @@ export const AnalyticsPage: React.FC = () => {
   if (!activeTournament || !analytics) {
     return (
       <div className="p-12 text-center text-slate-400 bg-white border border-slate-200 rounded-2xl shadow-sm">
-        Sélectionnez un tournoi pour voir les statistiques.
+        Select a tournament to view analytics.
       </div>
     );
   }
 
   if (loading) {
     return <div className="p-12 flex items-center justify-center gap-3 text-slate-500 bg-white border border-slate-200 rounded-2xl shadow-sm">
-      <Loader2 className="w-5 h-5 animate-spin" /> Chargement des statistiques du serveur…
+      <Loader2 className="w-5 h-5 animate-spin" /> Loading analytics from the server…
     </div>;
   }
 
   if (!remoteData) {
     return <div className="p-12 text-center text-slate-500 bg-white border border-slate-200 rounded-2xl shadow-sm">
-      Les statistiques du serveur ne sont pas disponibles. Vérifiez la connexion au backend et réessayez.
+      Server analytics are unavailable. Check the backend connection and try again.
     </div>;
   }
 
@@ -74,10 +75,10 @@ export const AnalyticsPage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-xl font-bold font-display uppercase tracking-wide text-white">
-              Statistiques & Analytique
+              Statistics & Analytics
             </h2>
             <p className="text-xs text-blue-100/70 mt-0.5">
-              Méta breakdown, épuisements de cartes, scores clutch et courbes de win-rate.
+              Meta breakdown, card cooldowns, clutch scores, and win rate trends.
             </p>
           </div>
         </div>
@@ -87,7 +88,7 @@ export const AnalyticsPage: React.FC = () => {
             {activeTournament.name}
           </span>
           <span className="text-xs text-white/70">
-            {analytics.matchesCompleted} / {analytics.totalMatches} Matchs Finalisés
+            {analytics.matchesCompleted} / {analytics.totalMatches} Matches Completed
           </span>
         </div>
       </div>
@@ -96,7 +97,7 @@ export const AnalyticsPage: React.FC = () => {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm card-hover">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            <span>Matchs Terminés</span>
+            <span>Completed Matches</span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center">
               <Trophy className="w-4 h-4 text-amber-500" />
             </div>
@@ -112,7 +113,7 @@ export const AnalyticsPage: React.FC = () => {
 
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm card-hover">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            <span>Couronnes Totales</span>
+            <span>Total Crowns</span>
             <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center">
               <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />
             </div>
@@ -121,13 +122,13 @@ export const AnalyticsPage: React.FC = () => {
             {analytics.totalCrowns}
           </div>
           <div className="text-[11px] text-slate-400 mt-1 font-medium">
-            Moy. {analytics.averageCrownsPerGame} couronnes/match
+            Avg. {analytics.averageCrownsPerGame} crowns/match
           </div>
         </div>
 
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm card-hover">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            <span>Coût Élixir Moyen</span>
+            <span>Average Elixir Cost</span>
             <div className="w-8 h-8 rounded-xl bg-purple-50 flex items-center justify-center">
               <Droplets className="w-4 h-4 text-purple-500 fill-purple-500" />
             </div>
@@ -136,13 +137,13 @@ export const AnalyticsPage: React.FC = () => {
             {analytics.averageDeckElixir}
           </div>
           <div className="text-[11px] text-purple-500 mt-1 font-medium">
-            Cycle Rapide / Bridge-Spam Méta
+            Fast Cycle / Bridge Spam Meta
           </div>
         </div>
 
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm card-hover">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            <span>Pool de Cartes</span>
+            <span>Pool de Cards</span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
               <Layers className="w-4 h-4 text-blue-500" />
             </div>
@@ -151,7 +152,7 @@ export const AnalyticsPage: React.FC = () => {
             {analytics.cardAnalytics.length}
           </div>
           <div className="text-[11px] text-blue-500 mt-1 font-medium">
-            Cartes uniques déployées
+            Unique cards played
           </div>
         </div>
       </div>
@@ -161,10 +162,10 @@ export const AnalyticsPage: React.FC = () => {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="font-display font-bold text-lg text-slate-900 uppercase tracking-wider">
-              Performances des Compétiteurs
+              Player Performance
             </h3>
             <p className="text-xs text-slate-400">
-              Win rates, scores de couronnes, performances clutch et diversité de decks.
+              Win rates, crown scores, clutch performance, and deck diversity.
             </p>
           </div>
         </div>
@@ -173,10 +174,10 @@ export const AnalyticsPage: React.FC = () => {
           <table className="w-full text-left text-sm text-slate-600">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                <th className="py-3 px-4">Joueur</th>
+                <th className="py-3 px-4">Player</th>
                 <th className="py-3 px-4">Win Rate</th>
-                <th className="py-3 px-4 text-center">Matchs</th>
-                <th className="py-3 px-4 text-center">Efficacité Couronnes</th>
+                <th className="py-3 px-4 text-center">Matches</th>
+                <th className="py-3 px-4 text-center">Crown Efficiency</th>
                 <th className="py-3 px-4 text-center">Score Clutch</th>
                 <th className="py-3 px-4 text-center">Decks Uniques</th>
               </tr>
@@ -185,7 +186,10 @@ export const AnalyticsPage: React.FC = () => {
               {analytics.playerAnalytics.map((p) => (
                 <tr key={p.playerId} className="hover:bg-slate-50/60 transition-colors">
                   <td className="py-3.5 px-4 font-semibold text-slate-800">
-                    <div>{p.playerName}</div>
+                    <div className="flex items-center gap-2.5">
+                      <PlayerAvatar src={p.avatarUrl} name={p.playerName} className="w-8 h-8 rounded-full object-cover border border-slate-200" />
+                      <span>{p.playerName}</span>
+                    </div>
                     <div className="text-[10px] font-mono text-[#0b2559]/70">{p.playerTag}</div>
                   </td>
 
@@ -232,14 +236,14 @@ export const AnalyticsPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="font-display font-bold text-base text-slate-900 uppercase tracking-wider flex items-center gap-2">
               <TrendingUp className="w-4 h-4 text-amber-500" />
-              <span>Cartes les Plus Jouées</span>
+              <span>Most Played Cards</span>
             </h3>
-            <span className="text-[11px] text-slate-400">Usage Méta</span>
+            <span className="text-[11px] text-slate-400">Meta Usage</span>
           </div>
 
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
             {topCards.map((cardStat) => {
-              const card: Card = { id: cardStat.cardId, name: cardStat.cardName, rarity: cardStat.rarity as Card['rarity'], elixir_cost: cardStat.elixirCost, icon_url: null };
+              const card: Card = { id: cardStat.cardId, name: cardStat.cardName, rarity: cardStat.rarity as Card['rarity'], elixir_cost: cardStat.elixirCost, icon_url: cardStat.iconUrl ?? null };
               return (
                 <div key={cardStat.cardId} className="flex flex-col items-center gap-1">
                   <CardItem card={card} size="sm" />
@@ -264,7 +268,7 @@ export const AnalyticsPage: React.FC = () => {
 
           <div className="grid grid-cols-4 sm:grid-cols-8 gap-2">
             {highestWinRateCards.map((cardStat) => {
-              const card: Card = { id: cardStat.cardId, name: cardStat.cardName, rarity: cardStat.rarity as Card['rarity'], elixir_cost: cardStat.elixirCost, icon_url: null };
+              const card: Card = { id: cardStat.cardId, name: cardStat.cardName, rarity: cardStat.rarity as Card['rarity'], elixir_cost: cardStat.elixirCost, icon_url: cardStat.iconUrl ?? null };
               return (
                 <div key={cardStat.cardId} className="flex flex-col items-center gap-1">
                   <CardItem card={card} size="sm" />
@@ -285,9 +289,9 @@ export const AnalyticsPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="font-display font-bold text-base text-slate-900 uppercase tracking-wider flex items-center gap-2">
               <Droplets className="w-4 h-4 text-purple-500" />
-              <span>Courbe Coût Élixir</span>
+              <span>Elixir Cost Curve</span>
             </h3>
-            <span className="text-xs text-slate-400">Nombre de Cartes</span>
+            <span className="text-xs text-slate-400">Nombre de Cards</span>
           </div>
 
           <div className="flex items-end justify-between gap-2 h-40 pt-4">
@@ -314,7 +318,7 @@ export const AnalyticsPage: React.FC = () => {
           <div className="flex items-center justify-between border-b border-slate-100 pb-3">
             <h3 className="font-display font-bold text-base text-slate-900 uppercase tracking-wider flex items-center gap-2">
               <PieChart className="w-4 h-4 text-amber-500" />
-              <span>Répartition par Rareté</span>
+              <span>Rarity Breakdown</span>
             </h3>
           </div>
 
@@ -335,7 +339,7 @@ export const AnalyticsPage: React.FC = () => {
                 <div key={r.rarity} className="space-y-1">
                   <div className="flex justify-between text-xs font-semibold">
                     <span className="text-slate-700">{r.rarity}</span>
-                    <span className="text-slate-400">{r.count} cartes ({pct}%)</span>
+                    <span className="text-slate-400">{r.count} cards ({pct}%)</span>
                   </div>
                   <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
                     <div

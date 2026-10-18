@@ -217,7 +217,7 @@ export async function getTournament(idInput: unknown) {
   );
   if (!rows[0]) return null;
   const [players] = await pool.execute<RowDataPacket[]>(
-    `SELECT p.id, p.name, p.player_tag AS playerTag, tp.points, tp.matches_played AS matchesPlayed,
+    `SELECT p.id, p.name, p.player_tag AS playerTag, p.avatar_url AS avatarUrl, tp.points, tp.matches_played AS matchesPlayed,
             tp.matches_won AS matchesWon, tp.crowns_for AS crownsFor, tp.crowns_against AS crownsAgainst
      FROM tournament_players tp JOIN players p ON p.id = tp.player_id
      WHERE tp.tournament_id = ? ORDER BY tp.points DESC, p.name`, [id],

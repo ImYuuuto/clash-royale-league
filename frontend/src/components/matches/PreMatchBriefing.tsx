@@ -23,7 +23,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
   const cooldownEnabled = tournament.cooldown_duration > 0;
   const p1BannedCards = fixture.player1.bannedCards || [];
   const p2BannedCards = fixture.player2.bannedCards || [];
-  const statusLabel = fixture.status === 'completed' ? 'Match terminé' : fixture.status === 'in_progress' ? 'Série en cours' : 'Match à venir';
+  const statusLabel = fixture.status === 'completed' ? 'Match completed' : fixture.status === 'in_progress' ? 'Series in Progress' : 'Upcoming Match';
 
   return (
     <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-xl space-y-8 animate-fadeIn max-w-5xl mx-auto">
@@ -34,7 +34,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
             <span>Match #{String(fixture.matchNumber).padStart(2, '0')}</span>
             <span className="text-slate-300">•</span>
             <span className="text-slate-600 font-bold">
-              {fixture.isTiebreaker ? 'Mini-Finale Tiebreaker BO5' : 'Match unique'}
+              {fixture.isTiebreaker ? 'Mini-Finale Tiebreaker BO5' : 'Single Match'}
             </span>
           </div>
           <div className={`inline-flex items-center gap-1.5 mt-2 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide ${fixture.status === 'completed' ? 'bg-slate-100 border-slate-200 text-slate-600' : fixture.status === 'in_progress' ? 'bg-amber-50 border-amber-200 text-amber-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
@@ -42,13 +42,13 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
             {statusLabel}
           </div>
           <h2 className="text-2xl font-black font-display uppercase tracking-wide text-slate-900 mt-1">
-            Briefing Tactique Pré-Match
+            Pre-Match Tactical Briefing
           </h2>
         </div>
 
         <div className="flex items-center gap-3">
           <Button variant="outline" onClick={onBack}>
-            Retour aux Matchs
+            Back to Matches
           </Button>
           {fixture.game && (
             <Button
@@ -56,7 +56,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
               onClick={() => onOpenRegister(fixture)}
               icon={<Swords className="w-4 h-4" />}
             >
-              Modifier le résultat
+              Edit Result
             </Button>
           )}
           {!fixture.game && fixture.status !== 'completed' && (
@@ -65,7 +65,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
               onClick={() => onOpenRegister(fixture)}
               icon={<Swords className="w-4 h-4" />}
             >
-              Enregistrer le Match
+              Record Result
             </Button>
           )}
         </div>
@@ -83,7 +83,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
             />
             <div>
               <span className="text-[10px] uppercase font-bold text-blue-700 tracking-wider">
-                Coin Bleu • Joueur 1
+                Blue Corner • Player 1
               </span>
               <h3 className="font-display font-black text-2xl text-slate-900 tracking-wide leading-tight">
                 {fixture.player1.name}
@@ -96,12 +96,12 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
 
           <div className="flex items-center gap-3 mt-2 text-xs flex-wrap">
             <span className="bg-white px-2.5 py-1 rounded-lg border border-slate-200 font-bold text-slate-700 shadow-sm">
-              Points Tournoi : <strong className="text-amber-600">{fixture.player1.points || 0}</strong>
+              Tournament Points: <strong className="text-amber-600">{fixture.player1.points || 0}</strong>
             </span>
             {cooldownEnabled && (
               <span className="bg-rose-50 text-rose-700 px-2.5 py-1 rounded-lg border border-rose-200 font-bold flex items-center gap-1 shadow-sm">
                 <Flame className="w-3.5 h-3.5 text-rose-600" />
-                {p1BannedCards.length} Cartes Épuisées
+                {p1BannedCards.length} Cards on Cooldown
               </span>
             )}
           </div>
@@ -124,7 +124,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
             />
             <div>
               <span className="text-[10px] uppercase font-bold text-rose-700 tracking-wider">
-                Coin Rouge • Joueur 2
+                Red Corner • Player 2
               </span>
               <h3 className="font-display font-black text-2xl text-slate-900 tracking-wide leading-tight">
                 {fixture.player2.name}
@@ -137,12 +137,12 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
 
           <div className="flex items-center gap-3 mt-2 text-xs flex-wrap">
             <span className="bg-white px-2.5 py-1 rounded-lg border border-slate-200 font-bold text-slate-700 shadow-sm">
-              Points Tournoi : <strong className="text-amber-600">{fixture.player2.points || 0}</strong>
+              Tournament Points: <strong className="text-amber-600">{fixture.player2.points || 0}</strong>
             </span>
             {cooldownEnabled && (
               <span className="bg-rose-50 text-rose-700 px-2.5 py-1 rounded-lg border border-rose-200 font-bold flex items-center gap-1 shadow-sm">
                 <Flame className="w-3.5 h-3.5 text-rose-600" />
-                {p2BannedCards.length} Cartes Épuisées
+                {p2BannedCards.length} Cards on Cooldown
               </span>
             )}
           </div>
@@ -153,26 +153,26 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
       <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 flex items-center justify-between flex-wrap gap-4 text-xs">
         <div className="flex items-center gap-4 text-slate-700 font-semibold flex-wrap">
           <span className="flex items-center gap-1.5 font-bold text-slate-900">
-            <Shield className="w-4 h-4 text-amber-500" /> Format : Match unique
+            <Shield className="w-4 h-4 text-amber-500" /> Format: Single Match
           </span>
           <span className="text-slate-300">•</span>
           <span>
-            Règle d'épuisement :{' '}
+            Card Cooldown Rule:{' '}
             <strong className="text-amber-600">
-              {cooldownEnabled ? `${tournament.cooldown_duration} Matchs de verrouillage` : 'Désactivé'}
+              {cooldownEnabled ? `${tournament.cooldown_duration} cooldown matches` : 'Disabled'}
             </strong>
           </span>
           <span className="text-slate-300">•</span>
           <span>
             Anti-doublon de decks :{' '}
             <strong className="text-amber-600">
-              {tournament.ban_duplicate_decks ? 'Actif (Strictement appliqué)' : 'Autorisé'}
+              {tournament.ban_duplicate_decks ? 'Active (Strictly Enforced)' : 'Allowed'}
             </strong>
           </span>
         </div>
 
         <div className="text-[11px] text-slate-500 italic">
-          * Les deux joueurs peuvent utiliser des cartes identiques. Decks secrets révélés à l'enregistrement.
+          * Both players may use the same cards. Secret decks are revealed when the result is submitted.
         </div>
       </div>
 
@@ -182,7 +182,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-3 gap-3">
             <h3 className="font-display font-black text-lg text-slate-900 uppercase tracking-wide flex items-center gap-2">
               <Lock className="w-4 h-4 text-rose-500" />
-              <span>Suivi de Disponibilité des Cartes (Cooldown)</span>
+              <span>Card Availability Tracking (Cooldown)</span>
             </h3>
 
             <div className="flex items-center gap-2 flex-wrap">
@@ -204,7 +204,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
                     : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
                 }`}
               >
-                Cartes de {fixture.player1.name}
+                Cards de {fixture.player1.name}
               </button>
               <button
                 onClick={() => setActiveTab('p2_cards')}
@@ -214,7 +214,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
                     : 'bg-slate-100 text-slate-600 hover:text-slate-900 hover:bg-slate-200'
                 }`}
               >
-                Cartes de {fixture.player2.name}
+                Cards de {fixture.player2.name}
               </button>
             </div>
           </div>
@@ -225,9 +225,9 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
               <div className="bg-slate-50 border border-blue-200 p-5 rounded-2xl space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-sm text-blue-900 uppercase">
-                    Cartes Bloquées - {fixture.player1.name} ({p1BannedCards.length})
+                    Blocked Cards - {fixture.player1.name} ({p1BannedCards.length})
                   </h4>
-                  <span className="text-[10px] text-slate-500 font-semibold">Indisponibles pour ce match</span>
+                  <span className="text-[10px] text-slate-500 font-semibold">Unavailable for this match</span>
                 </div>
                 {p1BannedCards.length > 0 ? (
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -243,7 +243,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
                   </div>
                 ) : (
                   <div className="py-8 text-center text-slate-500 text-xs font-medium">
-                    Aucune carte en cooldown. Tout le roster est disponible !
+                    No cards are on cooldown. All cards are available!
                   </div>
                 )}
               </div>
@@ -252,9 +252,9 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
               <div className="bg-slate-50 border border-rose-200 p-5 rounded-2xl space-y-3 shadow-sm">
                 <div className="flex items-center justify-between">
                   <h4 className="font-bold text-sm text-rose-900 uppercase">
-                    Cartes Bloquées - {fixture.player2.name} ({p2BannedCards.length})
+                    Blocked Cards - {fixture.player2.name} ({p2BannedCards.length})
                   </h4>
-                  <span className="text-[10px] text-slate-500 font-semibold">Indisponibles pour ce match</span>
+                  <span className="text-[10px] text-slate-500 font-semibold">Unavailable for this match</span>
                 </div>
                 {p2BannedCards.length > 0 ? (
                   <div className="grid grid-cols-4 sm:grid-cols-6 gap-2">
@@ -270,7 +270,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
                   </div>
                 ) : (
                   <div className="py-8 text-center text-slate-500 text-xs font-medium">
-                    Aucune carte en cooldown. Tout le roster est disponible !
+                    No cards are on cooldown. All cards are available!
                   </div>
                 )}
               </div>
@@ -281,10 +281,10 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
             <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl shadow-sm">
               <div className="mb-4">
                 <h4 className="font-bold text-sm text-slate-900">
-                  Cartes Épuisées pour {fixture.player1.name}
+                  Cards on Cooldown for {fixture.player1.name}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  Les cartes jouées au cours des {tournament.cooldown_duration} derniers sets ne peuvent pas être inscrites.
+                  Cards played in the last {tournament.cooldown_duration} sets cannot be selected.
                 </p>
               </div>
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
@@ -305,10 +305,10 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
             <div className="bg-slate-50 border border-slate-200 p-6 rounded-2xl shadow-sm">
               <div className="mb-4">
                 <h4 className="font-bold text-sm text-slate-900">
-                  Cartes Épuisées pour {fixture.player2.name}
+                  Cards on Cooldown for {fixture.player2.name}
                 </h4>
                 <p className="text-xs text-slate-500">
-                  Les cartes jouées au cours des {tournament.cooldown_duration} derniers sets ne peuvent pas être inscrites.
+                  Cards played in the last {tournament.cooldown_duration} sets cannot be selected.
                 </p>
               </div>
               <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-3">
@@ -327,7 +327,7 @@ export const PreMatchBriefing: React.FC<PreMatchBriefingProps> = ({
         </div>
       ) : (
         <div className="p-8 text-center rounded-2xl bg-slate-50 border border-slate-200 text-slate-500 text-xs font-semibold">
-          L'épuisement des cartes est désactivé pour ce tournoi. Toutes les cartes disponibles dans le catalogue sont accessibles aux deux joueurs.
+          Card cooldowns are disabled for this tournament. All cards in the catalog are available to both players.
         </div>
       )}
     </div>

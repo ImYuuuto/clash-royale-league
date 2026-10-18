@@ -2,6 +2,7 @@ export interface PlayerAnalytics {
   playerId: number;
   playerName: string;
   playerTag: string;
+  avatarUrl?: string | null;
   winRate: number;
   matchesWon: number;
   matchesPlayed: number;
@@ -16,6 +17,7 @@ export interface CardAnalytics {
   cardName: string;
   rarity: string;
   elixirCost: number;
+  iconUrl?: string | null;
   usageCount: number;
   winCount: number;
   winRate: number;

@@ -14,7 +14,7 @@ interface DeckDisplayProps {
 export const DeckDisplay: React.FC<DeckDisplayProps> = ({
   cards,
   onRemoveCard,
-  title = 'Deck Enregistré (8 Cartes)',
+  title = 'Registered Deck (8 Cards)',
   subtitle,
   isInvalidDuplicate = false,
 }) => {
@@ -40,7 +40,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
                   : 'bg-amber-100 text-amber-800 border border-amber-300'
               }`}
             >
-              {cards.length} / 8 Cartes
+              {cards.length} / 8 Cards
             </span>
           </div>
           {subtitle && <p className="text-xs text-slate-500 mt-0.5">{subtitle}</p>}
@@ -49,7 +49,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
         {/* Average Elixir Badge */}
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-xl bg-purple-100 border border-purple-200 text-purple-800">
           <Droplets className="w-3.5 h-3.5 fill-purple-600 text-purple-600" />
-          <span className="text-xs font-semibold">Moyenne :</span>
+          <span className="text-xs font-semibold">Average:</span>
           <span className="text-sm font-bold text-purple-900">{avgElixir}</span>
         </div>
       </div>
@@ -58,7 +58,7 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
       {isInvalidDuplicate && (
         <div className="mb-3 p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs flex items-center gap-2 font-semibold">
           <AlertCircle className="w-4 h-4 shrink-0" />
-          <span>Cette combinaison exacte de 8 cartes a déjà été utilisée par ce joueur dans ce tournoi.</span>
+          <span>This exact 8-card deck has already been used by this player in this tournament.</span>
         </div>
       )}
 
@@ -90,11 +90,11 @@ export const DeckDisplay: React.FC<DeckDisplayProps> = ({
       <div className="mt-3 text-right">
         {isComplete ? (
           <span className="text-xs text-emerald-600 font-bold inline-flex items-center gap-1">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Deck complet et prêt
+            <CheckCircle2 className="w-3.5 h-3.5" /> Deck complete and ready
           </span>
         ) : (
           <span className="text-xs text-amber-600 font-bold">
-            Sélectionnez encore {emptySlotsCount} carte{emptySlotsCount > 1 ? 's' : ''} pour compléter le deck
+            Select {emptySlotsCount} more card{emptySlotsCount > 1 ? 's' : ''} to complete the deck
           </span>
         )}
       </div>

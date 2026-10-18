@@ -35,10 +35,10 @@ export const TournamentsPage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-xl font-bold font-display uppercase tracking-wide text-white">
-              Gestionnaire de Tournois
+              Tournament Manager
             </h2>
             <p className="text-xs text-blue-100/70 mt-0.5">
-              Créez des ligues, configurez les règles d'épuisement et inspectez les calendriers.
+              Create leagues, configure cooldown rules, and review schedules.
             </p>
           </div>
         </div>
@@ -49,7 +49,7 @@ export const TournamentsPage: React.FC = () => {
             onClick={() => setWizardOpen(true)}
             icon={<Plus className="w-4 h-4" />}
           >
-            Créer Tournoi
+            Create Tournament
           </Button>
         )}
       </div>
@@ -94,7 +94,7 @@ export const TournamentsPage: React.FC = () => {
                               : 'bg-slate-50 text-slate-500 border-slate-200'
                           }`}
                         >
-                          {t.status === 'active' ? 'Actif' : t.status}
+                          {t.status === 'active' ? 'Active' : t.status}
                         </span>
                         <span className="text-xs font-semibold text-slate-400 capitalize">
                           {t.format.replace(/_/g, ' ')}
@@ -107,7 +107,7 @@ export const TournamentsPage: React.FC = () => {
 
                     {isActive && (
                       <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded-lg bg-[#0b2559]/10 text-[#0b2559] border border-[#0b2559]/20 shrink-0">
-                        Ligue Active
+                        Active League
                       </span>
                     )}
                   </div>
@@ -116,26 +116,26 @@ export const TournamentsPage: React.FC = () => {
                   <div className="flex flex-wrap gap-2 mt-4">
                     <div className="text-[11px] font-medium bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl text-slate-600 flex items-center gap-1.5">
                       <Shield className="w-3.5 h-3.5 text-[#0b2559]" />
-                      <span>Match unique</span>
+                      <span>Single Match</span>
                     </div>
 
                     <div className="text-[11px] font-medium bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl text-slate-600 flex items-center gap-1.5">
                       <Flame className="w-3.5 h-3.5 text-orange-500" />
                       <span>
                         {t.cooldown_duration > 0
-                          ? `${t.cooldown_duration} Matchs Épuisement`
-                          : 'Sans Cooldown'}
+                          ? `${t.cooldown_duration} Cooldown Matches`
+                          : 'No Cooldown'}
                       </span>
                     </div>
 
                     <div className="text-[11px] font-medium bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl text-slate-600 flex items-center gap-1.5">
                       <Ban className="w-3.5 h-3.5 text-rose-500" />
-                      <span>{t.ban_duplicate_decks ? 'Pas de Doublons' : 'Doublons Autorisés'}</span>
+                      <span>{t.ban_duplicate_decks ? 'No Duplicates' : 'Doublons Alloweds'}</span>
                     </div>
 
                     <div className="text-[11px] font-medium bg-slate-50 border border-slate-100 px-2.5 py-1 rounded-xl text-slate-600 flex items-center gap-1.5">
                       <Users className="w-3.5 h-3.5 text-blue-500" />
-                      <span>{t.players.length} Compétiteurs</span>
+                      <span>{t.players.length} Players</span>
                     </div>
                   </div>
                 </div>
@@ -143,7 +143,7 @@ export const TournamentsPage: React.FC = () => {
                 {/* Footer */}
                 <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between">
                   <span className="text-[11px] text-slate-400">
-                    Créé le : {new Date(t.created_at).toLocaleDateString('fr-FR')}
+                    Created: {new Date(t.created_at).toLocaleDateString('en-US')}
                   </span>
                   <div className="flex items-center gap-3">
                     <button
@@ -151,25 +151,25 @@ export const TournamentsPage: React.FC = () => {
                       disabled={deletingTournamentId === t.id}
                       onClick={async (event) => {
                         event.stopPropagation();
-                        if (!window.confirm(`Supprimer le tournoi « ${t.name} » et tous ses matchs et résultats ? Cette action est irréversible.`)) return;
+                        if (!window.confirm(`Delete tournament “${t.name}” and all its matches and results? This action cannot be undone.`)) return;
                         setDeletingTournamentId(t.id);
                         try {
                           await deleteTournament(t.id);
-                          showNotification('success', 'Tournoi supprimé', `${t.name} a été supprimé.`);
+                          showNotification('success', 'Tournament deleted', `${t.name} was deleted.`);
                         } catch (error) {
-                          showNotification('error', 'Suppression impossible', error instanceof Error ? error.message : 'Une erreur est survenue.');
+                          showNotification('error', 'Could not delete', error instanceof Error ? error.message : 'An error occurred.');
                         } finally {
                           setDeletingTournamentId(null);
                         }
                       }}
                       className="inline-flex items-center gap-1 text-[11px] font-semibold text-rose-600 hover:text-rose-800 disabled:opacity-50"
-                      aria-label={`Supprimer le tournoi ${t.name}`}
+                      aria-label={`Delete tournament ${t.name}`}
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      {deletingTournamentId === t.id ? 'Suppression…' : 'Supprimer'}
+                      {deletingTournamentId === t.id ? 'Suppression…' : 'Delete'}
                     </button>
                     <div className="flex items-center gap-1 text-xs font-semibold text-[#0b2559] hover:text-blue-700">
-                      <span>{isActive ? 'Actuellement Active' : 'Activer la Ligue'}</span>
+                      <span>{isActive ? 'Currently Active' : 'Activate League'}</span>
                       <ChevronRight className="w-3.5 h-3.5" />
                     </div>
                   </div>

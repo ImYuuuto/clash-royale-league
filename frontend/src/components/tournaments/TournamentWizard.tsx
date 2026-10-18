@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { CreateTournamentInput, TournamentFormat, CardCooldownDuration, MatchFormatBo, TiebreakerMode } from '../../types/tournament';
 import { Player } from '../../types/player';
+import { PlayerAvatar } from '../players/PlayerAvatar';
 import { Button } from '../ui/Button';
 import { Trophy, Shield, Users, CheckCircle, ArrowRight, ArrowLeft, Search, AlertCircle, Ban, Flame } from 'lucide-react';
 import { useNotifications } from '../../context/NotificationContext';
@@ -49,7 +50,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
   const handleNext = () => {
     if (currentStep === 1) {
       if (!name.trim()) {
-        showNotification('warning', 'Nom Requis', 'Veuillez saisir un nom pour le tournoi.');
+        showNotification('warning', 'Name Required', 'Enter a tournament name.');
         return;
       }
       setCurrentStep(2);
@@ -57,7 +58,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
       setCurrentStep(3);
     } else if (currentStep === 3) {
       if (selectedPlayerIds.length < 2) {
-        showNotification('error', 'Compétiteurs Insuffisants', 'Au moins 2 joueurs sont requis pour lancer le tournoi.');
+        showNotification('error', 'Not Enough Players', 'At least 2 players are required to start a tournament.');
         return;
       }
       setCurrentStep(4);
@@ -66,7 +67,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
 
   const handleLaunch = async () => {
     if (selectedPlayerIds.length < 2) {
-      showNotification('error', 'Erreur de Validation', 'Au moins 2 joueurs doivent être inscrits.');
+      showNotification('error', 'Validation Error', 'At least 2 players must be enrolled.');
       return;
     }
     setSubmitting(true);
@@ -80,18 +81,18 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
         tiebreaker_mode: tiebreakerMode,
         playerIds: selectedPlayerIds,
       });
-      showNotification('success', 'Tournoi Créé !', `${name} a été officiellement lancé avec ${selectedPlayerIds.length} joueurs !`);
+      showNotification('success', 'Tournament Created!', `${name} has been launched with ${selectedPlayerIds.length} players!`);
     } catch (err) {
-      showNotification('error', 'Échec du Lancement', (err as Error).message || 'Impossible de créer le tournoi.');
+      showNotification('error', 'Launch Failed', (err as Error).message || 'Could not create the tournament.');
     } finally {
       setSubmitting(false);
     }
   };
 
   const steps = [
-    { num: 1, title: 'Infos Générales', icon: Trophy },
-    { num: 2, title: 'Règles & Cartes', icon: Shield },
-    { num: 3, title: 'Joueurs', icon: Users },
+    { num: 1, title: 'General Information', icon: Trophy },
+    { num: 2, title: 'Rules & Cards', icon: Shield },
+    { num: 3, title: 'Players', icon: Users },
     { num: 4, title: 'Confirmation', icon: CheckCircle },
   ];
 
@@ -119,7 +120,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
                 </div>
                 <div className="hidden sm:block">
                   <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                    Étape 0{s.num}
+                    Step 0{s.num}
                   </div>
                   <div
                     className={`text-xs font-bold tracking-wide ${
@@ -147,16 +148,16 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
         <div className="space-y-6 animate-fadeIn">
           <div>
             <h2 className="text-xl font-black font-display uppercase tracking-wide text-slate-900">
-              Étape 1 : Informations Générales
+              Step 1: General Information
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Définissez le nom du tournoi et la formule du calendrier.
+              Set the tournament name and schedule format.
             </p>
           </div>
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-              Nom du Tournoi *
+              Tournament Name *
             </label>
             <input
               type="text"
@@ -170,7 +171,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
 
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-2">
-              Format de la Ligue *
+                League Format *
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
@@ -183,10 +184,10 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
                 }`}
               >
                 <div className="font-display font-black text-base text-amber-700">
-                  Round-Robin Simple (Matchs simples)
+                  Round-Robin Simple (Matches simples)
                 </div>
                 <div className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Chaque participant affronte tous les autres joueurs une seule fois. Idéal pour un calendrier rapide et équilibré.
+                  Each player faces every other player once. Ideal for a quick, balanced schedule.
                 </div>
               </button>
 
@@ -200,10 +201,10 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
                 }`}
               >
                 <div className="font-display font-black text-base text-amber-700">
-                  Double Round-Robin (Aller-Retour)
+                  Double Round Robin
                 </div>
                 <div className="text-xs text-slate-600 mt-1 leading-relaxed">
-                  Matchs aller-retour. Chaque joueur dispute deux séries face à chaque adversaire pour une compétitivité maximale.
+                  Home and away matches. Each player plays two series against every opponent.
                 </div>
               </button>
             </div>
@@ -216,10 +217,10 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
         <div className="space-y-6 animate-fadeIn">
           <div>
             <h2 className="text-xl font-black font-display uppercase tracking-wide text-slate-900">
-              Étape 2 : Règles & Restrictions des Cartes
+              Step 2: Card Rules & Restrictions
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Configurez le cooldown des cartes, l'anti-doublon et les règles de départage.
+              Configure card cooldowns, duplicate deck rules, and tiebreakers.
             </p>
           </div>
 
@@ -228,16 +229,16 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
             <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-sm">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-1 flex items-center gap-1.5">
                 <Flame className="w-4 h-4 text-amber-600" />
-                <span>Cooldown des Cartes Jouées</span>
+                <span>Played Card Cooldown</span>
               </label>
               <p className="text-[11px] text-slate-500 mb-3">
-                Les cartes utilisées deviennent indisponibles pour les N prochains sets individuels.
+                Played cards become unavailable for the next N individual games.
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { value: 0, label: 'Désactivé' },
-                  { value: 2, label: '2 Matchs' },
-                  { value: 3, label: '3 Matchs' },
+                  { value: 0, label: 'Disabled' },
+                  { value: 2, label: '2 Matches' },
+                  { value: 3, label: '3 Matches' },
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -259,10 +260,10 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
             <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-sm">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-1 flex items-center gap-1.5">
                 <Ban className="w-4 h-4 text-amber-600" />
-                <span>Anti-Doublon de Decks (8 cartes)</span>
+                <span>Prevent Duplicate Decks (8 Cards)</span>
               </label>
               <p className="text-[11px] text-slate-500 mb-3">
-                Interdit à un joueur de rejouer la même composition exacte de 8 cartes dans le tournoi.
+                Players cannot reuse the same 8-card deck in a tournament.
               </p>
               <div className="grid grid-cols-2 gap-2">
                 <button
@@ -274,7 +275,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
                       : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  Actif (Interdit)
+                  Active (Interdit)
                 </button>
                 <button
                   type="button"
@@ -285,33 +286,33 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
                       : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  Désactivé (Autorisé)
+                  Disabled (Allowed)
                 </button>
               </div>
             </div>
 
             <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-sm">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-1">
-                Format des Matchs
+                Match Format
               </label>
               <p className="text-[11px] text-slate-500">
-                Chaque fixture se joue en un seul match. Une victoire rapporte 3 points.
+                Each fixture is played as a single match. A win is worth 3 points.
               </p>
             </div>
 
             {/* Tiebreaker Rule */}
             <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-sm">
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-800 mb-1">
-                Règle de Départage en cas d'égalité
+                Tiebreaker Rule
               </label>
               <p className="text-[11px] text-slate-500 mb-3">
-                Mécanisme de départage si les premiers finissent avec le même total de points.
+                How ties in the standings are resolved.
               </p>
               <div className="grid grid-cols-3 gap-2">
                 {[
                   { value: 'bo5', label: 'Mini-Finale Bo5' },
                   { value: 'head_to_head', label: 'Confrontation Directe' },
-                  { value: 'shared_victory', label: 'Victoire Partagée' },
+                  { value: 'shared_victory', label: 'Shared Victory' },
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -338,10 +339,10 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div>
               <h2 className="text-xl font-black font-display uppercase tracking-wide text-slate-900">
-                Étape 3 : Roster des Joueurs
+                Step 3: Player Roster
               </h2>
               <p className="text-xs text-slate-500 mt-1">
-                Sélectionnez les compétiteurs qui participeront à ce tournoi.
+                Select the players who will participate in this tournament.
               </p>
             </div>
             <div
@@ -353,7 +354,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
             >
               <Users className="w-4 h-4" />
               <span>
-                {selectedPlayerIds.length} joueur(s) sélectionné(s)
+                {selectedPlayerIds.length} player(s) selected
               </span>
             </div>
           </div>
@@ -365,7 +366,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
               type="text"
               value={playerSearch}
               onChange={(e) => setPlayerSearch(e.target.value)}
-              placeholder="Filtrer les joueurs par nom ou tag Clash Royale..."
+              placeholder="Filter players by name or Clash Royale tag..."
               className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:bg-white focus:outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-500/20 font-semibold"
             />
           </div>
@@ -385,9 +386,9 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <img
-                      src={player.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80'}
-                      alt={player.name}
+                    <PlayerAvatar
+                      src={player.avatar_url}
+                      name={player.name}
                       className="w-10 h-10 rounded-full object-cover border border-slate-300 shadow-sm"
                     />
                     <div>
@@ -412,7 +413,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
           {selectedPlayerIds.length < 2 && (
             <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-center gap-2 font-semibold">
               <AlertCircle className="w-4 h-4 shrink-0 text-amber-600" />
-              <span>Veuillez sélectionner au moins 2 joueurs pour continuer.</span>
+              <span>Select at least 2 players to continue.</span>
             </div>
           )}
         </div>
@@ -423,10 +424,10 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
         <div className="space-y-6 animate-fadeIn">
           <div>
             <h2 className="text-xl font-black font-display uppercase tracking-wide text-slate-900">
-              Étape 4 : Récapitulatif & Lancement
+              Step 4: Review & Launch
             </h2>
             <p className="text-xs text-slate-500 mt-1">
-              Vérifiez tous les paramètres avant la génération officielle du calendrier des matchs.
+              Review all settings before generating the official match schedule.
             </p>
           </div>
 
@@ -434,40 +435,40 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-3 shadow-sm">
               <div className="text-xs font-black uppercase tracking-wider text-amber-700 border-b border-slate-200 pb-2">
-                Identité du Tournoi
+                Tournament Details
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Nom du Tournoi :</span>
+                <span className="text-slate-500">Tournament Name :</span>
                 <span className="font-bold text-slate-900">{name}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Format de Ronde :</span>
+                <span className="text-slate-500">Round Format:</span>
                 <span className="font-bold text-slate-900 capitalize">{format.replace(/_/g, ' ')}</span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Format de Match :</span>
-                <span className="font-bold text-slate-900">Match unique</span>
+                <span className="text-slate-500">Match Format:</span>
+                <span className="font-bold text-slate-900">Single Match</span>
               </div>
             </div>
 
             <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl space-y-3 shadow-sm">
               <div className="text-xs font-black uppercase tracking-wider text-amber-700 border-b border-slate-200 pb-2">
-                Règles des Decks
+                Deck Rules
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Cooldown des Cartes :</span>
+                <span className="text-slate-500">Card Cooldown:</span>
                 <span className="font-bold text-slate-900">
-                  {cooldownDuration > 0 ? `${cooldownDuration} Matchs de verrouillage` : 'Désactivé'}
+                  {cooldownDuration > 0 ? `${cooldownDuration} cooldown matches` : 'Disabled'}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
                 <span className="text-slate-500">Anti-Doublon :</span>
                 <span className="font-bold text-slate-900">
-                  {banDuplicateDecks ? 'Strictement Interdit' : 'Autorisé'}
+                  {banDuplicateDecks ? 'Strictly Prohibited' : 'Allowed'}
                 </span>
               </div>
               <div className="flex justify-between text-xs">
-                <span className="text-slate-500">Départage :</span>
+                <span className="text-slate-500">Tiebreaker:</span>
                 <span className="font-bold text-slate-900 uppercase">{tiebreakerMode}</span>
               </div>
             </div>
@@ -476,8 +477,8 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
           {/* Enrolled Players Preview */}
           <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-sm">
             <div className="text-xs font-black uppercase tracking-wider text-slate-700 mb-3 flex items-center justify-between">
-              <span>Joueurs Inscrits ({selectedPlayerIds.length})</span>
-              <span className="text-emerald-700 font-bold text-[11px]">Prêts pour le tirage round-robin</span>
+              <span>Enrolled Players ({selectedPlayerIds.length})</span>
+              <span className="text-emerald-700 font-bold text-[11px]">Ready for round robin</span>
             </div>
             <div className="flex flex-wrap gap-2">
               {players
@@ -487,7 +488,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
                     key={p.id}
                     className="flex items-center gap-2 bg-white border border-slate-200 px-3 py-1.5 rounded-xl text-xs text-slate-800 shadow-sm"
                   >
-                    <img src={p.avatar_url} alt="" className="w-5 h-5 rounded-full object-cover" />
+                    <PlayerAvatar src={p.avatar_url} name={p.name} className="w-5 h-5 rounded-full object-cover" />
                     <span className="font-bold">{p.name}</span>
                     <span className="text-amber-700 font-mono text-[10px] font-bold">{p.player_tag}</span>
                   </div>
@@ -506,11 +507,11 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
               onClick={() => setCurrentStep((prev) => (prev - 1) as 1 | 2 | 3 | 4)}
               icon={<ArrowLeft className="w-4 h-4" />}
             >
-              Précédent
+              Previous
             </Button>
           ) : (
             <Button variant="ghost" onClick={onCancel}>
-              Annuler
+              Cancel
             </Button>
           )}
         </div>
@@ -522,7 +523,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
               onClick={handleNext}
               icon={<ArrowRight className="w-4 h-4" />}
             >
-              Étape Suivante
+              Next Step
             </Button>
           ) : (
             <Button
@@ -531,7 +532,7 @@ export const TournamentWizard: React.FC<TournamentWizardProps> = ({
               onClick={handleLaunch}
               icon={<Trophy className="w-4 h-4" />}
             >
-              Lancer le Tournoi
+              Launch Tournament
             </Button>
           )}
         </div>

@@ -36,7 +36,7 @@ function MainApp() {
     },
     tournaments: {
       title: 'League Configurations',
-      description: 'Multi-step tournament wizard, card exhaustion rules, and format options.',
+      description: 'Multi-step tournament setup, card cooldown rules, and format options.',
     },
     standings: {
       title: 'Official Standings',
@@ -48,7 +48,7 @@ function MainApp() {
     },
     analytics: {
       title: 'Tournament Analytics',
-      description: 'Player win-rates, card exhaustion frequencies, and elixir curve distributions.',
+      description: 'Player win rates, card usage, and elixir cost distributions.',
     },
     settings: {
       title: 'System Settings',

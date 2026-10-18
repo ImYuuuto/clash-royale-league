@@ -29,7 +29,7 @@ export const PlayersPage: React.FC = () => {
       const data = await playersApi.getAll();
       setPlayers(data);
     } catch {
-      showNotification('error', 'Erreur', 'Impossible de charger le roster.');
+      showNotification('error', 'Error', 'Could not load the roster.');
     } finally {
       setLoading(false);
     }
@@ -51,11 +51,11 @@ export const PlayersPage: React.FC = () => {
     if (editingPlayer) {
       const updated = await playersApi.update(editingPlayer.id, input);
       setPlayers((prev) => prev.map((p) => (p.id === updated.id ? updated : p)));
-      showNotification('success', 'Profil Mis à Jour', `Le profil de ${updated.name} a été mis à jour.`);
+      showNotification('success', 'Profile Updated', `${updated.name}'s profile has been updated.`);
     } else {
       const created = await playersApi.create(input);
       setPlayers((prev) => [...prev, created]);
-      showNotification('success', 'Joueur Enregistré', `${created.name} a été ajouté au Roster.`);
+      showNotification('success', 'Player Saved', `${created.name} has been added to the roster.`);
     }
   };
 
@@ -65,10 +65,10 @@ export const PlayersPage: React.FC = () => {
     try {
       await playersApi.delete(deletePlayerTarget.id);
       setPlayers((prev) => prev.filter((p) => p.id !== deletePlayerTarget.id));
-      showNotification('success', 'Joueur Supprimé', `${deletePlayerTarget.name} a été retiré du roster.`);
+      showNotification('success', 'Player Deleted', `${deletePlayerTarget.name} has been removed from the roster.`);
       setDeletePlayerTarget(null);
     } catch {
-      showNotification('error', 'Erreur', 'Impossible de supprimer le joueur.');
+      showNotification('error', 'Error', 'Could not delete player.');
     } finally {
       setDeleting(false);
     }
@@ -84,10 +84,10 @@ export const PlayersPage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-xl font-bold font-display uppercase tracking-wide text-white">
-              Roster des Joueurs
+              Player Roster
             </h2>
             <p className="text-xs text-blue-100/70 mt-0.5">
-              Gestion des compétiteurs, tags Clash Royale et historiques.
+              Manage players, Clash Royale tags, and match history.
             </p>
           </div>
         </div>
@@ -100,7 +100,7 @@ export const PlayersPage: React.FC = () => {
           }}
           icon={<UserPlus className="w-4 h-4" />}
         >
-          Ajouter Joueur
+          Add Player
         </Button>
       </div>
 
@@ -112,13 +112,13 @@ export const PlayersPage: React.FC = () => {
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Rechercher par nom ou tag (#829PL90Q)..."
+            placeholder="Search by name or tag (#829PL90Q)..."
             className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-2.5 text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#0b2559] focus:ring-2 focus:ring-[#0b2559]/10 shadow-sm transition-all"
           />
         </div>
 
         <div className="text-xs text-slate-500 font-medium">
-          <span className="font-bold text-slate-800">{filteredPlayers.length}</span> sur {players.length} joueurs
+          <span className="font-bold text-slate-800">{filteredPlayers.length}</span> of {players.length} players
         </div>
       </div>
 
@@ -126,7 +126,7 @@ export const PlayersPage: React.FC = () => {
       {loading ? (
         <div className="min-h-[300px] flex flex-col items-center justify-center text-slate-400 gap-3">
           <Loader2 className="w-8 h-8 animate-spin text-[#0b2559]" />
-          <span className="text-xs font-semibold tracking-wider uppercase">Chargement du Roster...</span>
+          <span className="text-xs font-semibold tracking-wider uppercase">Loading roster...</span>
         </div>
       ) : filteredPlayers.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -147,11 +147,11 @@ export const PlayersPage: React.FC = () => {
           <div className="w-16 h-16 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-300 mb-4">
             <Users className="w-8 h-8" />
           </div>
-          <h3 className="font-display font-bold text-lg text-slate-800">Aucun Joueur Trouvé</h3>
+          <h3 className="font-display font-bold text-lg text-slate-800">No Players Found</h3>
           <p className="text-xs text-slate-400 mt-1 mb-6 leading-relaxed">
             {searchTerm
-              ? `Aucun joueur ne correspond à "${searchTerm}". Essayez un autre nom ou tag.`
-              : 'Le roster est vide. Enregistrez des joueurs pour commencer.'}
+              ? `No players match "${searchTerm}". Try another name or tag.`
+              : 'The roster is empty. Add players to get started.'}
           </p>
           <Button
             variant="primary"
@@ -162,7 +162,7 @@ export const PlayersPage: React.FC = () => {
             }}
             icon={<UserPlus className="w-4 h-4" />}
           >
-            Premier Joueur
+            Premier Player
           </Button>
         </div>
       )}
@@ -180,9 +180,9 @@ export const PlayersPage: React.FC = () => {
         isOpen={Boolean(deletePlayerTarget)}
         onClose={() => setDeletePlayerTarget(null)}
         onConfirm={handleDeletePlayer}
-        title="Retirer le Joueur du Roster"
-        message={`Êtes-vous sûr de vouloir retirer ${deletePlayerTarget?.name} (${deletePlayerTarget?.player_tag}) ? Cette action est irréversible.`}
-        confirmLabel="Retirer"
+        title="Remove Player from Roster"
+        message={`Are you sure you want to remove ${deletePlayerTarget?.name} (${deletePlayerTarget?.player_tag})? This action cannot be undone.`}
+        confirmLabel="Remove"
         variant="danger"
         loading={deleting}
       />

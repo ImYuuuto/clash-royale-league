@@ -11,9 +11,9 @@ function normalizeTournament(raw: any): Tournament {
     name: player.name,
     player_tag: player.playerTag ?? player.player_tag ?? player.tag ?? '',
     avatar_url: player.avatarUrl ?? player.avatar_url,
-        points: Number(player.points) || 0,
-        matches_played: Number(player.matchesPlayed ?? player.matches_played) || 0,
-        matches_won: Number(player.matchesWon ?? player.matches_won) || 0,
+    points: Number(player.points) || 0,
+    matches_played: Number(player.matchesPlayed ?? player.matches_played) || 0,
+    matches_won: Number(player.matchesWon ?? player.matches_won) || 0,
     crowns_for: Number(player.crownsFor ?? player.crowns_for) || 0,
     crowns_against: Number(player.crownsAgainst ?? player.crowns_against) || 0,
   })) : [];

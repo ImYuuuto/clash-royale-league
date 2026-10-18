@@ -82,7 +82,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
     } else {
       if (p1CardIds.length >= 8) return;
       if (!isEditing && tournament.cooldown_duration > 0 && p1BannedIds.has(card.id)) {
-        showNotification('warning', 'Carte en Cooldown', `${card.name} est actuellement verrouillée pour ${fixture.player1.name}.`);
+        showNotification('warning', 'Card on Cooldown', `${card.name} is currently locked for ${fixture.player1.name}.`);
         return;
       }
       setP1CardIds((prev) => [...prev, card.id]);
@@ -95,7 +95,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
     } else {
       if (p2CardIds.length >= 8) return;
       if (!isEditing && tournament.cooldown_duration > 0 && p2BannedIds.has(card.id)) {
-        showNotification('warning', 'Carte en Cooldown', `${card.name} est actuellement verrouillée pour ${fixture.player2.name}.`);
+        showNotification('warning', 'Card on Cooldown', `${card.name} is currently locked for ${fixture.player2.name}.`);
         return;
       }
       setP2CardIds((prev) => [...prev, card.id]);
@@ -107,28 +107,28 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
     setValidationError('');
 
     if (cards.length === 0) {
-      setValidationError('Le catalogue de cartes est indisponible. Rechargez les fixtures après avoir rétabli le serveur.');
+      setValidationError('The card catalog is unavailable. Refresh fixtures after restoring the server connection.');
       return;
     }
 
     // Validations
     if (!winnerId) {
-      setValidationError('Veuillez désigner le vainqueur du match.');
+      setValidationError('Select the match winner.');
       return;
     }
 
     if (p1Crowns < 0 || p2Crowns < 0) {
-      setValidationError('Le nombre de couronnes doit être positif ou nul.');
+      setValidationError('Crown count must be zero or greater.');
       return;
     }
 
     if (p1CardIds.length !== 8) {
-      setValidationError(`Le deck de ${fixture.player1.name} doit comporter exactement 8 cartes (${p1CardIds.length}/8).`);
+      setValidationError(`${fixture.player1.name}'s deck must contain exactly 8 cards (${p1CardIds.length}/8).`);
       return;
     }
 
     if (p2CardIds.length !== 8) {
-      setValidationError(`Le deck de ${fixture.player2.name} doit comporter exactement 8 cartes (${p2CardIds.length}/8).`);
+      setValidationError(`${fixture.player2.name}'s deck must contain exactly 8 cards (${p2CardIds.length}/8).`);
       return;
     }
 
@@ -161,18 +161,18 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
 
       showNotification(
         'success',
-        isEditing ? 'Résultat Modifié' : 'Résultat Validé !',
+        isEditing ? 'Result Updated' : 'Result Submitted!',
         isEditing
-          ? `Le résultat du match #${fixture.matchNumber} a été mis à jour.`
+          ? `Match #${fixture.matchNumber} result updated.`
           : response.data?.fixtureCompleted
-          ? `Le match #${fixture.matchNumber} est terminé.`
-          : `Match enregistré.`
+          ? `Match #${fixture.matchNumber} is complete.`
+          : `Match saved.`
       );
 
       onSuccess();
       onClose();
     } catch (err) {
-      setValidationError((err as Error).message || "Échec de l'enregistrement du set.");
+      setValidationError((err as Error).message || "Failed to save the game.");
     } finally {
       setSubmitting(false);
     }
@@ -182,8 +182,8 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
       <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={`${isEditing ? 'Modifier' : 'Enregistrer'} le Résultat : Match #${fixture.matchNumber}`}
-      description={`${isEditing ? 'Corrigez' : 'Saisissez'} le vainqueur, les couronnes et les decks de 8 cartes.`}
+      title={`${isEditing ? 'Edit' : 'Save'} Result: Match #${fixture.matchNumber}`}
+      description={`${isEditing ? 'Edit' : 'Enter'} the winner, crown counts, and 8-card decks.`}
       maxWidth="4xl"
     >
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -191,7 +191,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
           <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 flex items-start gap-2.5 font-semibold">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <div>
-              <strong className="block font-bold">Erreur de validation</strong>
+              <strong className="block font-bold">Validation Error</strong>
               <span>{validationError}</span>
             </div>
           </div>
@@ -201,14 +201,14 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 border border-slate-200/90 p-4 rounded-2xl">
           <div className="rounded-xl border border-slate-200 bg-white p-3">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-              Match de la fixture
+              Match
             </label>
-            <div className="text-sm font-bold text-[#0b2559]">Match unique</div>
+            <div className="text-sm font-bold text-[#0b2559]">Single Match</div>
           </div>
 
           <div className="md:col-span-2">
             <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-              Désigner le Vainqueur *
+              Select the Winner *
             </label>
             <div className="grid grid-cols-2 gap-2">
               <button
@@ -221,7 +221,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
                 }`}
               >
                 <Crown className={`w-3.5 h-3.5 ${winnerId === fixture.player1.id ? 'fill-white' : ''}`} />
-                <span>{fixture.player1.name} (Bleu)</span>
+                <span>{fixture.player1.name} (Blue)</span>
               </button>
 
               <button
@@ -234,7 +234,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
                 }`}
               >
                 <Crown className={`w-3.5 h-3.5 ${winnerId === fixture.player2.id ? 'fill-white' : ''}`} />
-                <span>{fixture.player2.name} (Rouge)</span>
+                <span>{fixture.player2.name} (Red)</span>
               </button>
             </div>
           </div>
@@ -244,7 +244,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
         <div className="grid grid-cols-2 gap-4">
           <div className="bg-blue-50/70 border border-blue-200 p-4 rounded-2xl">
             <label className="block text-xs font-bold uppercase tracking-wider text-blue-800 mb-2">
-              Couronnes • {fixture.player1.name}
+              Crowns • {fixture.player1.name}
             </label>
             <div className="flex items-center gap-2">
               {[0, 1, 2, 3].map((num) => (
@@ -266,7 +266,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
 
           <div className="bg-rose-50/70 border border-rose-200 p-4 rounded-2xl">
             <label className="block text-xs font-bold uppercase tracking-wider text-rose-800 mb-2">
-              Couronnes • {fixture.player2.name}
+              Crowns • {fixture.player2.name}
             </label>
             <div className="flex items-center gap-2">
               {[0, 1, 2, 3].map((num) => (
@@ -327,7 +327,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
               <DeckDisplay
                 cards={p1Cards}
                 onRemoveCard={(id) => setP1CardIds((prev) => prev.filter((cid) => cid !== id))}
-                title={`Deck Sélectionné : ${fixture.player1.name}`}
+                title={`Selected Deck: ${fixture.player1.name}`}
                 isInvalidDuplicate={false}
               />
               <CardPicker
@@ -346,7 +346,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
               <DeckDisplay
                 cards={p2Cards}
                 onRemoveCard={(id) => setP2CardIds((prev) => prev.filter((cid) => cid !== id))}
-                title={`Deck Sélectionné : ${fixture.player2.name}`}
+                title={`Selected Deck: ${fixture.player2.name}`}
                 isInvalidDuplicate={false}
               />
               <CardPicker
@@ -365,18 +365,18 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
           <div className="text-xs text-slate-500 font-semibold">
             {p1CardIds.length === 8 && p2CardIds.length === 8 && winnerId ? (
               <span className="text-emerald-600 font-bold flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-emerald-500" /> Prêt pour validation officielle
+                <Sparkles className="w-4 h-4 text-emerald-500" /> Ready for Official Submission
               </span>
             ) : (
               <span className="text-amber-600 font-semibold">
-                Désignez le vainqueur et composez 8 cartes par joueur pour soumettre.
+                Select a winner and choose 8 cards for each player to submit.
               </span>
             )}
           </div>
 
           <div className="flex items-center gap-3">
             <Button variant="outline" type="button" onClick={onClose} disabled={submitting}>
-              Annuler
+              Cancel
             </Button>
             <Button
               variant="gold"
@@ -384,7 +384,7 @@ export const PostMatchModal: React.FC<PostMatchModalProps> = ({
               loading={submitting}
               icon={<Check className="w-4 h-4" />}
             >
-              Valider le Résultat
+              Submit Result
             </Button>
           </div>
         </div>

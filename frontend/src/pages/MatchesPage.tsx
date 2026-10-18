@@ -56,7 +56,7 @@ export const MatchesPage: React.FC = () => {
               Lobby & Fixtures
             </h2>
             <p className="text-xs text-blue-100/70 mt-0.5">
-              Inspectez les affrontements, consultez les disponibilités et enregistrez les résultats.
+              Review matchups, check card availability, and record results.
             </p>
           </div>
         </div>
@@ -74,7 +74,7 @@ export const MatchesPage: React.FC = () => {
                   : 'text-white/70 hover:text-white'
               }`}
             >
-              {s === 'all' ? 'Tous' : s === 'scheduled' ? 'À venir' : s === 'in_progress' ? 'En cours' : 'Terminés'}
+              {s === 'all' ? 'All' : s === 'scheduled' ? 'Upcoming' : s === 'in_progress' ? 'In Progress' : 'Completed'}
             </button>
           ))}
         </div>
@@ -110,10 +110,10 @@ export const MatchesPage: React.FC = () => {
                         : 'bg-blue-50 text-blue-700 border-blue-200'
                     }`}
                   >
-                    {isCompleted ? 'Terminé' : isInProgress ? 'En cours' : 'À venir'}
+                    {isCompleted ? 'Completed' : isInProgress ? 'In Progress' : 'Upcoming'}
                   </span>
                   <div className="text-[11px] text-slate-400 font-medium mt-1">
-                    {fixture.isTiebreaker ? 'Tiebreaker BO5' : 'Match unique'}
+                    {fixture.isTiebreaker ? 'Tiebreaker BO5' : 'Single Match'}
                   </div>
                 </div>
               </div>
@@ -158,7 +158,7 @@ export const MatchesPage: React.FC = () => {
                   }}
                   icon={isCompleted ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Swords className="w-3.5 h-3.5" />}
                 >
-                  {isCompleted ? 'Inspecter' : isInProgress ? 'Continuer' : 'Enregistrer'}
+                  {isCompleted ? 'Review' : isInProgress ? 'Continue' : 'Record Result'}
                 </Button>
                 <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-slate-500 transition-colors" />
               </div>
@@ -168,7 +168,7 @@ export const MatchesPage: React.FC = () => {
 
         {filteredFixtures.length === 0 && (
           <div className="p-12 text-center rounded-2xl bg-white border border-slate-200 text-slate-400 text-xs shadow-sm">
-            Aucun match trouvé pour le filtre sélectionné.
+            No matches found for the selected filter.
           </div>
         )}
       </div>

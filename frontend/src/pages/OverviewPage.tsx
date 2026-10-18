@@ -45,15 +45,15 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
           <div className="space-y-2 max-w-2xl">
             <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-amber-300/90">
               <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
-              <span>Centre de Contrôle</span>
+              <span>Control Center</span>
               <span className="text-white/30">•</span>
               <span className="text-white/60">Clash Royale League</span>
             </div>
             <h1 className="text-3xl sm:text-4xl font-black font-display uppercase tracking-wide text-white leading-tight">
-              {activeTournament ? activeTournament.name : 'Aucune Ligue Active'}
+              {activeTournament ? activeTournament.name : 'No Active League'}
             </h1>
             <p className="text-sm text-blue-100/70 leading-relaxed">
-              Gestion en temps réel des fixtures, classements et suivi des cooldowns de cartes.
+              Manage fixtures, standings, and card cooldowns in real time.
             </p>
           </div>
 
@@ -73,7 +73,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
               icon={<Trophy className="w-5 h-5" />}
               className="!bg-white/10 !border-white/20 !text-white hover:!bg-white/20"
             >
-              Nouveau Tournoi
+              New Tournament
             </Button>
           </div>
         </div>
@@ -88,7 +88,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
         {/* Enrolled Players */}
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm card-hover">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            <span>Joueurs Inscrits</span>
+            <span>Enrolled Players</span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center">
               <Users className="w-4 h-4 text-blue-500" />
             </div>
@@ -97,14 +97,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
             {activeTournament?.players.length || 0}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            Compétiteurs du Roster Global
+            Players in the Global Roster
           </div>
         </div>
 
         {/* Matches Completed */}
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm card-hover">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            <span>Matchs Terminés</span>
+            <span>Completed Matches</span>
             <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
               <Swords className="w-4 h-4 text-emerald-500" />
             </div>
@@ -114,7 +114,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
             <span className="text-sm font-sans font-medium text-slate-400">/ {fixtures.length}</span>
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            {upcomingMatches.length} fixtures restantes
+            {upcomingMatches.length} fixtures remaining
           </div>
         </div>
 
@@ -140,18 +140,18 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
         {/* Cooldown Rule */}
         <div className="bg-white border border-slate-200 p-5 rounded-2xl shadow-sm card-hover">
           <div className="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-slate-400 mb-3">
-            <span>Règle d'Épuisement</span>
+            <span>Cooldown Rule</span>
             <div className="w-8 h-8 rounded-xl bg-orange-50 flex items-center justify-center">
               <Flame className="w-4 h-4 text-orange-500" />
             </div>
           </div>
           <div className="font-display font-black text-2xl text-slate-900 truncate">
             {activeTournament && activeTournament.cooldown_duration > 0
-              ? `${activeTournament.cooldown_duration} Matchs Lock`
-              : 'Désactivé'}
+              ? `${activeTournament.cooldown_duration} Matches Lock`
+              : 'Disabled'}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            {activeTournament?.ban_duplicate_decks ? 'Pas de Decks en Double' : 'Doublons Autorisés'}
+            {activeTournament?.ban_duplicate_decks ? 'No Duplicate Decks' : 'Doublons Alloweds'}
           </div>
         </div>
       </div>
@@ -164,17 +164,17 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
             <div>
               <h2 className="font-display font-bold text-lg text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <Swords className="w-4 h-4 text-amber-500" />
-                <span>Fixtures à Venir</span>
+                <span>Upcoming Fixtures</span>
               </h2>
               <p className="text-xs text-slate-400 mt-0.5">
-                Prochains affrontements programmés dans le calendrier du tournoi.
+                Next matchups on the tournament schedule.
               </p>
             </div>
             <button
               onClick={() => onNavigate('matches')}
               className="text-xs font-semibold text-[#0b2559] hover:text-blue-700 flex items-center gap-1 cursor-pointer"
             >
-              <span>Voir Tout</span>
+              <span>View All</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
@@ -212,14 +212,14 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
                   onClick={() => setRegisterFixture(f)}
                   icon={<Swords className="w-3.5 h-3.5" />}
                 >
-                  Enregistrer
+                  Save
                 </Button>
               </div>
             ))}
 
             {upcomingMatches.length === 0 && (
               <div className="py-12 text-center text-slate-400 text-xs">
-                Toutes les fixtures programmées ont été complétées.
+                All scheduled fixtures have been completed.
               </div>
             )}
           </div>
@@ -231,9 +231,9 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
             <div>
               <h2 className="font-display font-bold text-lg text-slate-900 uppercase tracking-wider flex items-center gap-2">
                 <Crown className="w-4 h-4 text-amber-500 fill-amber-500" />
-                <span>Classement</span>
+                <span>Standings</span>
               </h2>
-              <p className="text-xs text-slate-400 mt-0.5">Meilleurs compétiteurs de la ligue.</p>
+              <p className="text-xs text-slate-400 mt-0.5">Top players in the league.</p>
             </div>
             <button
               onClick={() => onNavigate('standings')}

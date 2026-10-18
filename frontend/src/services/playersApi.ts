@@ -1,8 +1,9 @@
 import { axiosInstance } from './apiClient';
 import type { Player, CreatePlayerInput } from '../types/player';
+import { DEFAULT_PLAYER_AVATAR } from '../components/players/PlayerAvatar';
 
 const STORAGE_KEY = 'crl_global_roster';
-const DEFAULT_AVATAR = 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80';
+const DEFAULT_AVATAR = DEFAULT_PLAYER_AVATAR;
 
 function normalizePlayer(raw: any): Player {
   return {

@@ -2,6 +2,7 @@ import React from 'react';
 import { useTournament } from '../context/TournamentContext';
 import { useNotifications } from '../context/NotificationContext';
 import { tournamentsApi } from '../services/tournamentsApi';
+import { PlayerAvatar } from '../components/players/PlayerAvatar';
 import { Trophy, AlertTriangle, Crown, Sparkles } from 'lucide-react';
 
 export const StandingsPage: React.FC = () => {
@@ -21,10 +22,10 @@ export const StandingsPage: React.FC = () => {
           </div>
           <div>
             <h2 className="text-xl font-bold font-display uppercase tracking-wide text-white">
-              Classement Officiel
+              Official Standings
             </h2>
             <p className="text-xs text-blue-100/70 mt-0.5">
-              Rankings en direct, différentiel de couronnes et qualifications.
+              Live rankings, crown differential, and qualification status.
             </p>
           </div>
         </div>
@@ -32,7 +33,7 @@ export const StandingsPage: React.FC = () => {
         {activeTournament && (
           <div className="flex items-center gap-2 bg-white/10 border border-white/20 px-4 py-2 rounded-xl text-xs font-semibold text-white/90 backdrop-blur-sm">
             <span className="text-amber-300 uppercase tracking-wider text-[10px] font-bold">
-              Tournoi :
+              Tournament:
             </span>
             <span>{activeTournament.name}</span>
           </div>
@@ -51,7 +52,7 @@ export const StandingsPage: React.FC = () => {
               <span>Alerte Tiebreaker Championnat</span>
             </div>
             <p className="text-xs text-amber-600 mt-0.5">
-              Les meilleurs compétiteurs sont à égalité ! Mode de résolution :{' '}
+              Top players are tied! Tiebreaker mode:{' '}
               <strong className="text-amber-800 uppercase font-bold">
                 {activeTournament?.tiebreaker_mode === 'bo5' ? 'Best of 5 Mini-Finale' : activeTournament?.tiebreaker_mode}
               </strong>.
@@ -65,10 +66,10 @@ export const StandingsPage: React.FC = () => {
         <div className="p-6 border-b border-slate-100 flex items-center justify-between">
           <div>
             <h3 className="font-display font-bold text-lg text-slate-900 uppercase tracking-wider">
-              Tableau du Championnat
+              League Standings
             </h3>
             <p className="text-xs text-slate-400 mt-0.5">
-              Victoire = 3 points. La différence de couronnes (C+ moins C-) départage les égalités.
+              A win is worth 3 points. Crown difference (for minus against) breaks ties.
             </p>
           </div>
 
@@ -88,13 +89,13 @@ export const StandingsPage: React.FC = () => {
           <table className="w-full text-left text-sm text-slate-600 border-collapse">
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/80 text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                <th className="py-4 px-6 text-center w-16">Rang</th>
-                <th className="py-4 px-6">Joueur</th>
-                <th className="py-4 px-4 text-center">Joués</th>
-                <th className="py-4 px-4 text-center">Victoires</th>
-                <th className="py-4 px-4 text-center">Défaites</th>
-                <th className="py-4 px-4 text-center">C. Pour</th>
-                <th className="py-4 px-4 text-center">C. Contre</th>
+                <th className="py-4 px-6 text-center w-16">Rank</th>
+                <th className="py-4 px-6">Player</th>
+                <th className="py-4 px-4 text-center">Played</th>
+                <th className="py-4 px-4 text-center">Wins</th>
+                <th className="py-4 px-4 text-center">Losses</th>
+                <th className="py-4 px-4 text-center">Crowns For</th>
+                <th className="py-4 px-4 text-center">Crowns Against</th>
                 <th className="py-4 px-4 text-center">Diff.</th>
                 <th className="py-4 px-6 text-center">Points</th>
               </tr>
@@ -136,13 +137,14 @@ export const StandingsPage: React.FC = () => {
                     {/* Player */}
                     <td className="py-4 px-6">
                       <div className="flex items-center gap-3">
+                        <PlayerAvatar src={entry.avatar_url} name={entry.player_name} className="w-10 h-10 rounded-full object-cover border border-slate-200 shadow-sm" />
                         <div>
                           <div className="font-bold text-slate-800 text-sm flex items-center gap-1.5 leading-tight">
                             <span>{entry.player_name}</span>
                             {isFirst && <Crown className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />}
                             {entry.inTiebreaker && (
                               <span className="text-[9px] bg-rose-50 text-rose-600 px-1.5 py-0.5 rounded border border-rose-200 uppercase font-bold tracking-wider">
-                                Égalité #1
+                                Tied for 1st
                               </span>
                             )}
                           </div>
@@ -195,11 +197,11 @@ export const StandingsPage: React.FC = () => {
         {activeTournament && activeTournament.status !== 'completed' && (
           <div className="p-6 border-t border-slate-100 bg-slate-50/50 flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Résolution du Tournoi</h4>
+              <h4 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Tournament Resolution</h4>
               <p className="text-xs text-slate-400 mt-0.5">
                 {hasTiebreaker
-                  ? 'Deux joueurs sont à égalité en 1ère place. Lancez le tiebreaker officiel BO5.'
-                  : 'Tous les matchs réguliers peuvent être finalisés pour couronner le champion.'}
+                  ? 'Two players are tied for first. Start the official BO5 tiebreaker.'
+                  : 'All regular matches can be completed to crown the champion.'}
               </p>
             </div>
 
@@ -214,14 +216,14 @@ export const StandingsPage: React.FC = () => {
                         standings[1].player_id,
                       ]);
                       await refreshAll();
-                      showNotification('success', 'Tiebreaker Créé', 'Match de championnat BO5 créé !');
+                      showNotification('success', 'Tiebreaker Created', 'BO5 championship match created!');
                     } catch (err: any) {
-                      showNotification('error', 'Échec', err.message || 'Impossible de créer le tiebreaker.');
+                      showNotification('error', 'Failed', err.message || 'Could not create the tiebreaker.');
                     }
                   }}
                   className="px-4 py-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-white text-xs font-bold uppercase tracking-wider rounded-xl shadow-sm cursor-pointer"
                 >
-                  ⚔️ Créer Tiebreaker BO5
+                  ⚔️ Create BO5 Tiebreaker
                 </button>
               )}
 
@@ -231,14 +233,14 @@ export const StandingsPage: React.FC = () => {
                   try {
                     await tournamentsApi.updateStatus(activeTournament.id, 'completed');
                     await refreshAll();
-                    showNotification('success', 'Tournoi Terminé', 'Le champion a été enregistré !');
+                    showNotification('success', 'Tournament Complete', 'The champion has been recorded!');
                   } catch (err: any) {
-                    showNotification('error', 'Erreur', err.message || 'Impossible de terminer le tournoi.');
+                    showNotification('error', 'Error', err.message || 'Could not complete the tournament.');
                   }
                 }}
                 className="px-4 py-2 bg-[#0b2559] hover:bg-[#081d45] text-white text-xs font-bold uppercase tracking-wider rounded-xl border border-[#081d45] cursor-pointer shadow-sm"
               >
-                🏆 Finaliser la Ligue
+                🏆 Complete League
               </button>
             </div>
           </div>

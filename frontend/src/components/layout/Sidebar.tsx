@@ -38,18 +38,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
       ],
     },
     {
-      title: 'COMPÉTITION',
+      title: 'COMPETITION',
       items: [
-        { id: 'tournaments' as NavItem, label: 'Tournois', icon: Trophy },
-        { id: 'standings' as NavItem, label: 'Classement', icon: TableProperties },
-        { id: 'matches' as NavItem, label: 'Matchs & Lobby', icon: Swords },
-        { id: 'analytics' as NavItem, label: 'Statistiques', icon: BarChart3 },
+        { id: 'tournaments' as NavItem, label: 'Tournaments', icon: Trophy },
+        { id: 'standings' as NavItem, label: 'Standings', icon: TableProperties },
+        { id: 'matches' as NavItem, label: 'Matches & Lobby', icon: Swords },
+        { id: 'analytics' as NavItem, label: 'Analytics', icon: BarChart3 },
       ],
     },
     {
       title: 'CONFIGURATION',
       items: [
-        { id: 'settings' as NavItem, label: 'Paramètres', icon: Settings },
+        { id: 'settings' as NavItem, label: 'Settings', icon: Settings },
       ],
     },
   ];
@@ -70,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
               <span>Clash Royale</span>
             </div>
             <div className="text-[10px] font-bold text-amber-400 uppercase tracking-widest">
-              League & Tournois
+              League & Tournaments
             </div>
           </div>
         </div>
@@ -79,14 +79,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
         {activeTournament && (
           <div className="mx-3 mt-4 mb-2 p-3 rounded-xl bg-[#101f44] border border-[#1e3466]">
             <div className="text-[10px] uppercase font-bold tracking-wider text-[#7e95be] flex items-center justify-between">
-              <span>Ligue active</span>
+              <span>Active League</span>
               <span className="w-2 h-2 rounded-full bg-emerald-400" />
             </div>
             <div className="text-xs font-bold text-white mt-1 truncate">
               {activeTournament.name}
             </div>
             <div className="text-[10px] font-semibold text-amber-400 mt-0.5">
-              Match unique • {activeTournament.cooldown_duration > 0 ? `${activeTournament.cooldown_duration} Cards CD` : 'Sans Cooldown'}
+              Single round • {activeTournament.cooldown_duration > 0 ? `${activeTournament.cooldown_duration} Card Cooldown` : 'No Cooldown'}
             </div>
           </div>
         )}
@@ -130,10 +130,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ currentTab, onSelectTab }) => 
           </div>
           <div className="flex-1 min-w-0">
             <div className="text-xs font-bold text-white truncate">
-              Admin Tournoi
+              Tournament Admin
             </div>
             <div className="text-[10px] text-[#7188b0] truncate">
-              Organisateur
+              Organizer
             </div>
           </div>
         </div>

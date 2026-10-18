@@ -1,6 +1,7 @@
 import React from 'react';
 import { Player } from '../../types/player';
 import { Edit2, Trash2, Trophy, Swords, Crown } from 'lucide-react';
+import { PlayerAvatar } from './PlayerAvatar';
 
 interface PlayerCardProps {
   player: Player;
@@ -20,9 +21,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ player, onEdit, onDelete
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-3.5">
           <div className="relative">
-            <img
-              src={player.avatar_url || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=120&auto=format&fit=crop&q=80'}
-              alt={player.name}
+            <PlayerAvatar
+              src={player.avatar_url}
+              name={player.name}
               className="w-13 h-13 rounded-full object-cover border-2 border-slate-200 group-hover:border-amber-400 transition-colors shadow-sm"
             />
             <div className="absolute -bottom-1 -right-1 bg-amber-500 text-slate-950 p-0.5 rounded-full ring-2 ring-white shadow-sm">
@@ -44,16 +45,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ player, onEdit, onDelete
           <button
             onClick={() => onEdit(player)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-            title="Modifier le joueur"
-            aria-label="Modifier le joueur"
+            title="Edit player"
+            aria-label="Edit player"
           >
             <Edit2 className="w-4 h-4" />
           </button>
           <button
             onClick={() => onDelete(player)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
-            title="Supprimer le joueur"
-            aria-label="Supprimer le joueur"
+            title="Delete player"
+            aria-label="Delete player"
           >
             <Trash2 className="w-4 h-4" />
           </button>
@@ -75,7 +76,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ player, onEdit, onDelete
         <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
           <div className="text-[10px] uppercase font-bold text-slate-500 flex items-center justify-center gap-1">
             <Swords className="w-3 h-3 text-blue-600" />
-            <span>MATCHS</span>
+            <span>MATCHES</span>
           </div>
           <div className="font-display font-bold text-lg text-slate-800 mt-0.5">
             {player.matches_won ?? 0} / {player.matches_played ?? 0}
@@ -83,7 +84,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = ({ player, onEdit, onDelete
         </div>
 
         <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-          <div className="text-[10px] uppercase font-bold text-slate-500">VICTOIRES</div>
+          <div className="text-[10px] uppercase font-bold text-slate-500">WIN RATE</div>
           <div className="font-display font-bold text-lg text-emerald-600 mt-0.5">
             {winRate}%
           </div>

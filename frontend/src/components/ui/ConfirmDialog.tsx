@@ -22,7 +22,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   title,
   message,
   confirmLabel = 'Confirmer',
-  cancelLabel = 'Annuler',
+  cancelLabel = 'Cancel',
   variant = 'danger',
   loading = false,
 }) => {

@@ -41,7 +41,7 @@ export const Topbar: React.FC<TopbarProps> = ({
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shadow-sm">
             <Trophy className="w-4 h-4 text-amber-500 shrink-0" />
             <select
-              aria-label="Tournoi Actif"
+              aria-label="Active Tournament"
               value={activeTournament?.id || ''}
               onChange={(e) => setActiveTournamentId(Number(e.target.value))}
               className="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer max-w-[200px] truncate"
@@ -63,7 +63,7 @@ export const Topbar: React.FC<TopbarProps> = ({
           onClick={() => void refreshAll()}
           loading={loadingFixtures}
           icon={<RefreshCw className={`w-3.5 h-3.5 ${loadingFixtures ? 'animate-spin' : ''}`} />}
-          aria-label="Actualiser les données"
+          aria-label="Refresh data"
           className="px-3"
         >
           Actualiser
