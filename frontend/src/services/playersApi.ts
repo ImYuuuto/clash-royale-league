@@ -1,16 +1,13 @@
 import { axiosInstance } from './apiClient';
 import type { Player, CreatePlayerInput } from '../types/player';
-import { DEFAULT_PLAYER_AVATAR } from '../components/players/PlayerAvatar';
-
 const STORAGE_KEY = 'crl_global_roster';
-const DEFAULT_AVATAR = DEFAULT_PLAYER_AVATAR;
 
 function normalizePlayer(raw: any): Player {
   return {
     id: Number(raw.id),
     name: raw.name,
     player_tag: raw.playerTag || raw.player_tag || '',
-    avatar_url: raw.avatarUrl || raw.avatar_url || DEFAULT_AVATAR,
+    avatar_url: raw.avatarUrl ?? raw.avatar_url ?? undefined,
     created_at: raw.createdAt || raw.created_at,
     matches_played: Number(raw.matchesPlayed ?? raw.matches_played) || 0,
     matches_won: Number(raw.matchesWon ?? raw.matches_won) || 0,
@@ -69,7 +66,7 @@ export const playersApi = {
     const response = await axiosInstance.post('/api/players', {
       name: input.name.trim(),
       playerTag: normalizedTag,
-      avatarUrl: input.avatar_url || DEFAULT_AVATAR,
+      avatarUrl: input.avatar_url || '',
     });
     const raw = response.data?.data || response.data;
     if (!raw?.id) throw new Error('The backend did not return the created player.');

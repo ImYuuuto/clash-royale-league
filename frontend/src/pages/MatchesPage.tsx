@@ -64,7 +64,7 @@ export const MatchesPage: React.FC = () => {
         {/* Status Filters */}
         <div className="flex items-center gap-1.5 bg-white/10 border border-white/20 p-1.5 rounded-xl backdrop-blur-sm">
           <Filter className="w-3.5 h-3.5 text-white/50 ml-2 mr-1" />
-          {(['all', 'scheduled', 'in_progress', 'completed'] as const).map((s) => (
+          {(['all', 'scheduled', 'completed'] as const).map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
@@ -74,7 +74,7 @@ export const MatchesPage: React.FC = () => {
                   : 'text-white/70 hover:text-white'
               }`}
             >
-              {s === 'all' ? 'All' : s === 'scheduled' ? 'Upcoming' : s === 'in_progress' ? 'In Progress' : 'Completed'}
+              {s === 'all' ? 'All' : s === 'scheduled' ? 'Upcoming' : 'Completed'}
             </button>
           ))}
         </div>

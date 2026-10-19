@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card } from '../../types/api';
-import { Lock, Droplets } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
 const RARITY_COLORS: Record<Card['rarity'], { bg: string; border: string; glow: string; text: string }> = {
   Common: { bg: '#475569', border: '#94a3b8', glow: 'rgba(148,163,184,.5)', text: '#e2e8f0' },
@@ -29,7 +29,7 @@ export const CardItem: React.FC<CardItemProps> = ({
   onClick,
   onRemove,
   size = 'md',
-  showElixir = true,
+  showElixir: _showElixir = true,
 }) => {
   const rarityStyle = RARITY_COLORS[card.rarity] || RARITY_COLORS.Common;
   const [imageFailed, setImageFailed] = React.useState(false);
@@ -59,14 +59,8 @@ export const CardItem: React.FC<CardItemProps> = ({
       }}
       title={`${card.name} (${card.rarity}, ${card.elixir_cost} Elixir)${isBanned ? ' - On Cooldown' : ''}`}
     >
-      {/* Top row: Elixir Droplet & Status */}
+      {/* Top row: card actions */}
       <div className="flex items-center justify-between w-full z-10">
-        {showElixir && (
-          <div className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-purple-950/90 border border-purple-500/40 text-purple-300 font-bold text-[10px] shadow-sm">
-            <Droplets className="w-2.5 h-2.5 text-purple-400 fill-purple-400" />
-            <span>{card.elixir_cost}</span>
-          </div>
-        )}
         {onRemove && (
           <button
             onClick={(e) => {
@@ -82,27 +76,27 @@ export const CardItem: React.FC<CardItemProps> = ({
       </div>
 
       {/* Center: Card Illustration / Avatar */}
-      <div className="flex-1 flex items-center justify-center relative my-1">
-        {card.icon_url && !imageFailed ? (
-          <img
-            src={card.icon_url}
-            alt={card.name}
-            className="w-full h-full object-contain drop-shadow-md"
-            loading="lazy"
-            onError={() => setImageFailed(true)}
-          />
-        ) : (
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-base shadow-inner border"
-            style={{
-              borderColor: rarityStyle.border,
-              color: rarityStyle.text,
-              background: 'linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.95))',
-            }}
-          >
-            {card.name.charAt(0)}
-          </div>
-        )}
+      <div className="flex-1 min-h-0 w-full flex items-center justify-center relative my-1">
+  {card.icon_url && !imageFailed ? (
+    <img
+      src={card.icon_url}
+      alt={card.name}
+      className="max-w-full max-h-full w-auto h-auto object-contain drop-shadow-md"
+      loading="lazy"
+      onError={() => setImageFailed(true)}
+    />
+  ) : (
+    <div
+      className="w-10 h-10 shrink-0 rounded-full flex items-center justify-center font-bold text-base shadow-inner border"
+      style={{
+        borderColor: rarityStyle.border,
+        color: rarityStyle.text,
+        background: 'linear-gradient(135deg, rgba(30,41,59,0.8), rgba(15,23,42,0.95))',
+      }}
+    >
+      {card.name.charAt(0)}
+    </div>
+  )}
 
         {/* Cooldown Lock Overlay */}
         {isBanned && (
@@ -115,16 +109,10 @@ export const CardItem: React.FC<CardItemProps> = ({
         )}
       </div>
 
-      {/* Bottom: Name & Rarity badge */}
+      {/* Bottom: card name */}
       <div className="text-center z-10 w-full truncate">
         <div className="font-semibold text-slate-100 truncate tracking-tight text-[10px] leading-tight">
           {card.name}
-        </div>
-        <div
-          className="text-[8px] font-bold uppercase tracking-wider truncate"
-          style={{ color: rarityStyle.text }}
-        >
-          {card.rarity}
         </div>
       </div>
     </div>

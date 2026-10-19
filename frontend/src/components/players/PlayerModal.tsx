@@ -3,7 +3,6 @@ import { Modal } from '../ui/Modal';
 import { Button } from '../ui/Button';
 import { Player, CreatePlayerInput } from '../../types/player';
 import { User, Tag, Image, Check } from 'lucide-react';
-import { DEFAULT_PLAYER_AVATAR } from './PlayerAvatar';
 
 interface PlayerModalProps {
   isOpen: boolean;
@@ -14,7 +13,6 @@ interface PlayerModalProps {
 
 const PRESET_AVATARS = [
   'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=120&auto=format&fit=crop&q=80',
-  DEFAULT_PLAYER_AVATAR,
   'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=120&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=120&auto=format&fit=crop&q=80',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=120&auto=format&fit=crop&q=80',
@@ -29,7 +27,7 @@ export const PlayerModal: React.FC<PlayerModalProps> = ({
 }) => {
   const [name, setName] = useState('');
   const [tag, setTag] = useState('');
-  const [avatarUrl, setAvatarUrl] = useState(PRESET_AVATARS[0]);
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -37,11 +35,11 @@ export const PlayerModal: React.FC<PlayerModalProps> = ({
     if (initialPlayer) {
       setName(initialPlayer.name);
       setTag(initialPlayer.player_tag);
-      setAvatarUrl(initialPlayer.avatar_url || PRESET_AVATARS[0]);
+      setAvatarUrl(initialPlayer.avatar_url || '');
     } else {
       setName('');
       setTag('');
-      setAvatarUrl(PRESET_AVATARS[0]);
+      setAvatarUrl('');
     }
     setError('');
   }, [initialPlayer, isOpen]);
@@ -131,6 +129,19 @@ export const PlayerModal: React.FC<PlayerModalProps> = ({
             <span>Choose an Avatar</span>
           </label>
           <div className="flex items-center gap-2.5 overflow-x-auto pb-2">
+            <button
+              type="button"
+              onClick={() => setAvatarUrl('')}
+              className={`relative w-12 h-12 rounded-full overflow-hidden border-2 transition-transform cursor-pointer shrink-0 bg-amber-100 text-amber-800 font-bold flex items-center justify-center ${
+                !avatarUrl
+                  ? 'border-amber-500 ring-2 ring-amber-400 scale-105 shadow-md'
+                  : 'border-slate-200 opacity-60 hover:opacity-100 hover:border-slate-400'
+              }`}
+              aria-label="Use player initial"
+              title="Use player initial"
+            >
+              {name.trim().charAt(0) || '?'}
+            </button>
             {PRESET_AVATARS.map((url, idx) => (
               <button
                 key={idx}

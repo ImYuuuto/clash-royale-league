@@ -239,7 +239,7 @@ export const OverviewPage: React.FC<OverviewPageProps> = ({ onNavigate }) => {
               onClick={() => onNavigate('standings')}
               className="text-xs font-semibold text-[#0b2559] hover:text-blue-700 flex items-center gap-1 cursor-pointer"
             >
-              <span>Tableau Complet</span>
+              <span>Full Table</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
           </div>
