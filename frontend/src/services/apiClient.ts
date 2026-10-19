@@ -2,7 +2,7 @@ export const API_BASE_URL =
   import.meta.env.VITE_API_URL ||
   (typeof window !== 'undefined' && window.location.protocol.startsWith('http')
     ? ''
-    : 'http://127.0.0.1:3000');
+    : 'http://127.0.0.1:4000');
 
 export interface ApiResponse<T = unknown> {
   success: boolean;

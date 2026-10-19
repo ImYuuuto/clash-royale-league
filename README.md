@@ -59,7 +59,7 @@ For the web frontend and API without Electron:
 npm run dev:web
 ```
 
-The backend API listens on port `3000` by default. The frontend development server proxies `/api` requests to it. The backend starts its API even if MySQL is unavailable, but database-backed features require a working database connection.
+The backend API listens on port `4000` by default. The frontend development server proxies `/api` requests to it. The backend starts its API even if MySQL is unavailable, but database-backed features require a working database connection.
 
 On Windows, `start-app.bat` starts the Docker container named `mysql-container` (as set in `dev-config.bat`) and then runs the development app. Update that container name if your MySQL container uses another name.
 

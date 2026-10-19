@@ -8,7 +8,7 @@ if (process.env.CR_LEAGUE_USER_DATA_DIR) {
   app.setPath("userData", path.resolve(process.env.CR_LEAGUE_USER_DATA_DIR));
 }
 
-const API_PORT = 3000;
+const API_PORT = Number(process.env.PORT) || 4000;
 const API_URL = `http://127.0.0.1:${API_PORT}`;
 let mainWindow;
 let backendProcess;

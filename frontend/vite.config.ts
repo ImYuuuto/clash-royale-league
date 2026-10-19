@@ -1,6 +1,18 @@
 import react from "@vitejs/plugin-react";
 import { defineConfig, lazyPlugins } from "vite-plus";
 import tailwindcss from "@tailwindcss/vite"
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+
+const backendEnvPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../backend/.env");
+let backendPort = process.env.PORT || "4000";
+try {
+  const portLine = readFileSync(backendEnvPath, "utf8").match(/^\s*PORT\s*=\s*["']?(\d+)/m);
+  if (portLine?.[1]) backendPort = portLine[1];
+} catch {
+  // Use the backend's default port when no local .env file exists.
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -10,7 +22,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "http://127.0.0.1:3000",
+        target: `http://127.0.0.1:${backendPort}`,
         changeOrigin: true,
       },
     },

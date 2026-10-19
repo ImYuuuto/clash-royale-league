@@ -11,7 +11,7 @@ if (!databaseName || !databaseName.toLowerCase().endsWith("_test")) {
   throw new Error("Refusing to run: configure DB_NAME to a dedicated database ending in _test.");
 }
 
-const apiUrl = (process.env.CR_LEAGUE_TEST_API || "http://127.0.0.1:3000").replace(/\/$/, "");
+const apiUrl = (process.env.CR_LEAGUE_TEST_API || "http://127.0.0.1:4000").replace(/\/$/, "");
 const connection = await mysql.createConnection({
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT || 3306),

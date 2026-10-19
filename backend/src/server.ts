@@ -3,14 +3,27 @@ import app from "./app.js";
 import { testDatabaseConnection } from "./config/database.js";
 import { migrateKlawatTournamentToSingleGame } from "./services/management.service.js";
 
-const PORT = Number(process.env.PORT) || 3000;
+const PORT = Number(process.env.PORT) || 4000;
 
 async function startServer(): Promise<void> {
   console.log("Starting server...");
 
-  app.listen(PORT, () => {
-    console.log(`Tournament API running at http://localhost:${PORT}`);
-  });
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const server = app.listen(PORT, "127.0.0.1", () => {
+        console.log(`Tournament API running at http://127.0.0.1:${PORT}`);
+        resolve();
+      });
+      server.once("error", reject);
+    });
+  } catch (error) {
+    console.error(
+      `API could not listen on 127.0.0.1:${PORT}:`,
+      error instanceof Error ? error.message : error,
+    );
+    process.exitCode = 1;
+    return;
+  }
 
   try {
     await testDatabaseConnection();
